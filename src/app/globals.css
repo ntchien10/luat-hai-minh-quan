@@ -1,26 +1,212 @@
 @import "tailwindcss";
 
+/* Ensure the ampersand character always renders as a clean, normal, modern & instead of Playfair cursive glyph */
+@font-face {
+  font-family: "NormalAmpersand";
+  src: local("Plus Jakarta Sans"), local("Inter"), local("Arial"), local("Helvetica Neue"), local("Segoe UI"), local("Roboto");
+  unicode-range: U+0026;
+  font-weight: 100 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "NormalAmpersand";
+  src: local("Plus Jakarta Sans"), local("Inter"), local("Arial Italic"), local("Arial"), local("Helvetica Neue Italic"), local("Helvetica Neue"), local("Segoe UI");
+  unicode-range: U+0026;
+  font-weight: 100 900;
+  font-style: italic;
+}
+
+@theme {
+  --color-bordeaux-50: #FAF6F0;
+  --color-bordeaux-100: #F3EBDD;
+  --color-bordeaux-200: #E7D7BD;
+  --color-bordeaux-300: #D8BF9A;
+  --color-bordeaux-400: #C5A059;
+  --color-bordeaux-500: #B58D3D;
+  --color-bordeaux-600: #A48350;
+  --color-bordeaux-700: #96794F; /* Primary Brand Gold / Warm Bronze */
+  --color-bordeaux-800: #7E643E;
+  --color-bordeaux-900: #5C4626;
+  --color-bordeaux-950: #382A15;
+
+  --color-dark-theme: #26211C; /* Dark Warm Espresso Background */
+  --color-dark-alt: #1A1714;
+
+  --color-gold-300: #F3DEAB;
+  --color-gold-400: #E8CF94;
+  --color-gold-500: #DFBA73;
+  --color-gold-600: #C5A059;
+  --color-gold-700: #96794F;
+
+  --font-serif: "NormalAmpersand", var(--font-playfair), "Times New Roman", Times, Georgia, serif;
+  --font-sans: var(--font-sans), "Roboto", system-ui, sans-serif;
+}
+
 :root {
+  --font-serif: "NormalAmpersand", var(--font-playfair), "Times New Roman", Times, Georgia, serif;
+  --font-sans: var(--font-sans), "Roboto", system-ui, sans-serif;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1A1816;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+.font-serif,
+[class*="font-serif"] {
+  font-family: "NormalAmpersand", var(--font-playfair), "Times New Roman", Times, Georgia, serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
+  color: #333333;
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #96794F;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7E643E;
+}
+
+/* Decorative heading divider line */
+.h-gap {
+  display: inline-flex;
+  align-items: center;
+  margin: 8px 0 16px;
+}
+
+.h-gap span {
+  display: inline-block;
+  width: 64px;
+  height: 3px;
+  background-color: #96794F;
+  border-radius: 2px;
+}
+
+.h-gap span i {
+  display: none;
+}
+
+.h-gap.white span {
+  background-color: #DFBA73;
+}
+
+/* Unified Gold Pill Button (Mockup Standard) */
+.btn-gold,
+.btn-lawsight {
+  border-radius: 9999px;
+  background: linear-gradient(to right, #DFBA73, #C5A059, #96794F);
+  color: #14130F;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+  box-shadow: 0 4px 14px rgba(150, 121, 79, 0.35);
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-gold:hover,
+.btn-lawsight:hover {
+  background: linear-gradient(to right, #E8CF94, #D1AD63, #82673E);
+  box-shadow: 0 6px 20px rgba(150, 121, 79, 0.5);
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.btn-gold:active,
+.btn-lawsight:active {
+  transform: translateY(0);
+  scale: 0.98;
+}
+
+/* ─── FLATICON WEBFONT (FROM LAWSIGHT THEME) ─── */
+@font-face {
+  font-family: "Flaticon";
+  src: url("/fonts/Flaticon.woff") format("woff"),
+       url("/fonts/Flaticon.ttf") format("truetype"),
+       url("/fonts/Flaticon.svg#Flaticon") format("svg");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+[class^="flaticon-"]:before, [class*=" flaticon-"]:before {
+  font-family: "Flaticon";
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.flaticon-teamwork:before { content: "\f112"; }
+.flaticon-fingerprint:before { content: "\f10c"; }
+.flaticon-on-time-support:before { content: "\f10e"; }
+
+/* ─── EXACT LAWSIGHT CT-FANCYBOX-LAYOUT3 (1:1 LUATVANBAO.COM) ─── */
+.ct-fancybox-layout3 {
+  background-color: #ffffff;
+  padding: 48px 32px 48px 32px;
+  box-shadow: 0 1px 18px rgba(0, 0, 0, 0.11);
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  transition: all 250ms ease;
+}
+
+.ct-fancybox-layout3:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  transform: translateY(-4px);
+}
+
+.ct-fancybox-layout3 .ct-fancybox-icon {
+  line-height: 1;
+  margin-bottom: 18px;
+}
+
+.ct-fancybox-layout3 .ct-fancybox-icon i {
+  font-size: 55px;
+  color: #96794F;
+  background-image: linear-gradient(135deg, #DFBA73 0%, #96794F 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  filter: drop-shadow(0 4px 7px rgba(150, 121, 79, 0.35));
+}
+
+.ct-fancybox-layout3 .ct-fancybox-title {
+  margin-bottom: 14px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #191514;
+  font-family: var(--font-sans);
+}
+
+.ct-fancybox-layout3 .ct-fancybox-desc {
+  font-size: 14.5px;
+  color: #555555;
+  line-height: 25px;
+  font-family: var(--font-sans);
 }

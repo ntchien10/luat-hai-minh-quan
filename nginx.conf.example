@@ -1,0 +1,73 @@
+# ==============================================================================
+# CẤU HÌNH NGINX MẪU CHO WEBSITE CÔNG TY LUẬT HẢI MINH QUÂN
+# Áp dụng đầy đủ 5 Security Headers đạt chuẩn A+ (HSTS, CSP, X-Frame, X-Content-Type, Referrer)
+# ==============================================================================
+
+server {
+    listen 80;
+    server_name luathaiminhquan.vn www.luathaiminhquan.vn;
+    return 301 https://luathaiminhquan.vn$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name www.luathaiminhquan.vn;
+
+    ssl_certificate /path/to/fullchain.pem;
+    ssl_certificate_key /path/to/privkey.pem;
+
+    return 301 https://luathaiminhquan.vn$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name luathaiminhquan.vn;
+
+    root /var/www/hai-minh-quan-law/out;
+    index index.html;
+
+    # SSL Configuration (Chuẩn bảo mật hiện đại)
+    ssl_certificate /path/to/fullchain.pem;
+    ssl_certificate_key /path/to/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # 1. HSTS (HTTP Strict Transport Security)
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+    # 2. X-Content-Type-Options
+    add_header X-Content-Type-Options "nosniff" always;
+
+    # 3. X-Frame-Options (Chống clickjacking)
+    add_header X-Frame-Options "SAMEORIGIN" always;
+
+    # 4. Referrer-Policy
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # 5. Content-Security-Policy (CSP)
+    add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https: blob:; font-src 'self' data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https:;" always;
+
+    # 301 Redirect alias cũ
+    rewrite ^/tin-tuc/?$ /blog/ permanent;
+    rewrite ^/luat-su/(.*)$ /thanh-vien/$1/ permanent;
+    rewrite ^/blog/cac-truong-hop-su-dung-quyen-lien-quan-khong-phai-xin-phep-khong-phai-tra-tien-nhuan-but-thu-lao/?$ /blog/cac-truong-hop-su-dung-quyen-lien-quan-khong-xin-phep/ permanent;
+
+    # Định tuyến thư mục tĩnh Next.js SSG
+    location / {
+        try_files $uri $uri/ $uri/index.html =404;
+    }
+
+    # Cache tài nguyên tĩnh (images, fonts, css, js)
+    location ~* \.(jpg|jpeg|png|webp|svg|gif|ico|woff|woff2|ttf|css|js)$ {
+        expires 1y;
+        add_header Cache-Control "public, no-transform";
+    }
+
+    # Bật nén GZIP
+    gzip on;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/rss+xml font/woff2 image/svg+xml;
+}

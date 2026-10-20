@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backups and scratch
+backup_Archive.zip
+*.zip
+/scratch/

@@ -1,9 +1,25 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  output: "export",
+  trailingSlash: true,
+  images: {
+    unoptimized: true, // Bắt buộc khi dùng static export để Next/Image không đòi hỏi server Node.js tối ưu ảnh
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "luatvanbao.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.unsplash.com",
+      },
+    ],
+  },
   turbopack: {
     rules: {
       "*.css": {
@@ -11,6 +27,40 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "X-DNS-Prefetch-Control",
+            value: "on",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https: blob:; font-src 'self' data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https:;",
+          },
+        ],
+      },
+    ];
   },
 };
 
