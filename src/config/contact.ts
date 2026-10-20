@@ -4,7 +4,9 @@
  */
 export const contactConfig = {
   // Web3Forms Access Key (lấy miễn phí tại https://web3forms.com với email luathaiminhquan@gmail.com)
-  web3formsAccessKey: process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY || "",
+  web3formsAccessKey:
+    process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY ||
+    "86591422-94d3-4de0-b420-4def7c09ff54",
 
   targetEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || "luathaiminhquan@gmail.com",
 
