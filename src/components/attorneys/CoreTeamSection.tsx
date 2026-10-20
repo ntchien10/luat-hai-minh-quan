@@ -38,8 +38,14 @@ export const CoreTeamSection: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* 4 Members per view (ct-team-carousel-layout1) with white cards & real photos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Members view with white cards & real photos */}
+          <div
+            className={
+              displayedMembers.length === 1
+                ? "max-w-sm sm:max-w-md mx-auto"
+                : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            }
+          >
             {displayedMembers.map((member, idx) => (
               <motion.div
                 key={member.id}

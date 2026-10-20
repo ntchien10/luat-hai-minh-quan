@@ -65,7 +65,13 @@ export default function TeamPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        <div
+          className={
+            teamMembersList.length === 1
+              ? "max-w-sm sm:max-w-md mx-auto"
+              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
+          }
+        >
           {teamMembersList.map((member) => (
             <Link
               key={member.id}

@@ -343,8 +343,8 @@ export const pressItems: PressItem[] = [
   },
 ];
 
-// 5. 6 Thành viên cốt lõi với ẢNH THẬT 100% từ luatvanbao.com
-export const teamMembersList: TeamMember[] = [
+// 5. Toàn bộ danh sách nhân sự (Lưu trữ đầy đủ để kích hoạt lại khi cần)
+export const allTeamMembersArchive: TeamMember[] = [
   {
     id: "do-thi-thanh-hai",
     name: "Ls. Đỗ Thị Thanh Hải",
@@ -484,6 +484,11 @@ export const teamMembersList: TeamMember[] = [
       "Tư vấn Thuế & Báo cáo tài chính",
     ],
   },
+];
+
+// Tạm thời chỉ hiển thị Luật sư Đỗ Thị Thanh Hải theo yêu cầu
+export const teamMembersList: TeamMember[] = [
+  allTeamMembersArchive[0], // Ls. Đỗ Thị Thanh Hải (Giám đốc điều hành)
 ];
 
 // 6. Toàn bộ Bài viết & Cẩm nang pháp lý chuyên sâu của Luật Hải Minh Quân
