@@ -56,8 +56,8 @@ export const PracticeAreas: React.FC = () => {
           transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="text-center max-w-5xl mx-auto mb-7 lg:mb-9"
         >
-          <h2 className="font-serif text-lg sm:text-2xl md:text-[26px] lg:text-[28px] xl:text-[31px] font-bold text-[#1A1816] whitespace-normal sm:whitespace-nowrap tracking-tight">
-            Chúng tôi ở đây để hỗ trợ bạn mọi vấn đề về Pháp lý
+          <h2 className="font-serif text-lg sm:text-2xl md:text-[26px] lg:text-[28px] xl:text-[31px] font-bold text-[#1A1816] tracking-tight">
+            DỊCH VỤ PHÁP LÝ CỦA LUẬT HẢI MINH QUÂN
           </h2>
           <div className="h-gap mt-2">
             <span>
