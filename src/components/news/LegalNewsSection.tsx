@@ -76,8 +76,11 @@ export const LegalNewsSection: React.FC = () => {
                   />
                   {/* Subtle decorative bottom banner across image */}
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-r from-[#96794F]/95 to-[#6E542D]/95 py-1.5 px-3 flex items-center justify-between text-[11px] text-white">
-                    <span translate="no" className="notranslate font-bold tracking-wide">
-                      LUẬT HẢI MINH QUÂN
+                    <span className="font-bold tracking-wide">
+                      LUẬT{" "}
+                      <span translate="no" className="notranslate">
+                        HẢI MINH QUÂN
+                      </span>
                     </span>
                     <span className="italic text-[#E8CF94] text-[10px]">Điểm tựa pháp lý vững chắc</span>
                   </div>

@@ -63,9 +63,9 @@ export const PracticeAreas: React.FC = () => {
           className="text-center max-w-5xl mx-auto mb-7 lg:mb-9"
         >
           <h2 className="font-serif text-lg sm:text-2xl md:text-[26px] lg:text-[28px] xl:text-[31px] font-bold text-[#1A1816] tracking-tight">
-            DỊCH VỤ PHÁP LÝ CỦA{" "}
+            DỊCH VỤ PHÁP LÝ CỦA LUẬT{" "}
             <span translate="no" className="notranslate">
-              LUẬT HẢI MINH QUÂN
+              HẢI MINH QUÂN
             </span>
           </h2>
           <div className="h-gap mt-2">

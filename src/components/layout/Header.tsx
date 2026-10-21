@@ -245,10 +245,6 @@ export const Header: React.FC = () => {
           if (
             t === "HẢI MINH QUÂN" ||
             t === "Hải Minh Quân" ||
-            t === "LUẬT HẢI MINH QUÂN" ||
-            t === "Luật Hải Minh Quân" ||
-            t === "CÔNG TY LUẬT TNHH HẢI MINH QUÂN" ||
-            t === "Công ty Luật TNHH Hải Minh Quân" ||
             t === "Đỗ Thị Thanh Hải" ||
             t === "Ls. Đỗ Thị Thanh Hải"
           ) {
@@ -516,10 +512,7 @@ export const Header: React.FC = () => {
               >
                 HẢI MINH QUÂN
               </span>
-              <span
-                translate="no"
-                className="notranslate text-[10px] sm:text-[11px] font-semibold tracking-widest text-[#96794F] uppercase"
-              >
+              <span className="text-[10px] sm:text-[11px] font-semibold tracking-widest text-[#96794F] uppercase">
                 CÔNG TY LUẬT TNHH
               </span>
             </div>
