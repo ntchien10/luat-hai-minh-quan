@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Phone,
+  LogIn,
 } from "lucide-react";
 import {
   allNavigationServices,
@@ -311,10 +312,19 @@ export const Header: React.FC = () => {
             >
               Liên hệ
             </Link>
+
+            {/* Đăng nhập */}
+            <Link
+              href="/admin/"
+              className="px-3 py-2 font-serif text-[15px] border-b-2 border-transparent text-[#1A1816] hover:text-[#96794F] transition-colors flex items-center gap-1.5"
+            >
+              <LogIn className="w-4 h-4 text-[#96794F]" />
+              <span>Đăng nhập</span>
+            </Link>
           </nav>
 
-          {/* Right Header items: Search icon */}
-          <div className="hidden lg:flex items-center gap-4">
+          {/* Right Header items: Search icon & Login Button */}
+          <div className="hidden lg:flex items-center gap-3">
             <button
               onClick={() => {
                 setSearchOpen(!searchOpen);
@@ -325,10 +335,26 @@ export const Header: React.FC = () => {
             >
               {searchOpen ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
             </button>
+
+            <Link
+              href="/admin/"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0F1E36] hover:bg-[#162a4d] text-[#E5B869] hover:text-white text-xs font-bold tracking-wide uppercase shadow-sm border border-[#96794F]/40 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5 text-[#96794F]" />
+              <span>Đăng nhập</span>
+            </Link>
           </div>
 
           {/* Mobile menu trigger */}
           <div className="flex items-center gap-2 lg:hidden">
+            <Link
+              href="/admin/"
+              className="p-2 rounded-full bg-[#0F1E36] text-[#E5B869] border border-[#96794F]/30"
+              aria-label="Đăng nhập quản trị"
+              title="Đăng nhập quản trị"
+            >
+              <LogIn className="w-4 h-4" />
+            </Link>
             <button
               onClick={() => {
                 setSearchOpen(!searchOpen);
@@ -594,6 +620,17 @@ export const Header: React.FC = () => {
           >
             Liên hệ
           </Link>
+
+          <div className="pt-2">
+            <Link
+              href="/admin/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-[#0F1E36] text-[#E5B869] font-serif text-sm font-bold shadow-sm border border-[#96794F]/40"
+            >
+              <LogIn className="w-4 h-4 text-[#96794F]" />
+              <span>Đăng nhập Quản trị</span>
+            </Link>
+          </div>
         </div>
       )}
     </header>
