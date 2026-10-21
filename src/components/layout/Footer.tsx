@@ -81,7 +81,16 @@ export const Footer: React.FC = () => {
               </p>
 
               <p className="leading-relaxed">
-                <strong className="text-white">Trụ sở chính:</strong> {firmInfo.hanoiOffice}
+                <strong className="text-white">Trụ sở chính:</strong>{" "}
+                <a
+                  href={firmInfo.mapUrl || "https://maps.app.goo.gl/CrBtZoPSprZKJRPV6"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-300 hover:text-[#D4AF37] hover:underline transition-colors"
+                  title="Bấm để mở Google Maps chỉ đường"
+                >
+                  {firmInfo.hanoiOffice}
+                </a>
               </p>
 
               <p className="leading-relaxed text-[12.5px] text-slate-400 pt-1 border-t border-white/10">

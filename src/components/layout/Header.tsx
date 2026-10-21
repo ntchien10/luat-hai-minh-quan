@@ -332,7 +332,7 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-slate-200 text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
             {/* Địa chỉ - Click mở Google Maps chỉ đường trực tiếp */}
             <a
-              href="https://maps.app.goo.gl/Y91ruvwpFkt7DguQ7"
+              href="https://maps.app.goo.gl/CrBtZoPSprZKJRPV6"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 truncate hover:text-[#DFBA73] hover:underline transition-all cursor-pointer group"
@@ -904,7 +904,7 @@ export const Header: React.FC = () => {
 
           {/* Địa chỉ trên mobile (Link mở Google Maps) */}
           <a
-            href="https://maps.app.goo.gl/Y91ruvwpFkt7DguQ7"
+            href="https://maps.app.goo.gl/CrBtZoPSprZKJRPV6"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 py-2 text-xs text-slate-600 hover:text-[#96794F] border-b border-slate-100"

@@ -88,9 +88,15 @@ export default function ContactPage() {
               <MapPin className="w-6 h-6" />
             </div>
             <h3 className="font-serif text-lg font-bold text-[#1A1816]">Trụ sở Hà Nội</h3>
-            <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed">
+            <a
+              href={firmInfo.mapUrl || "https://maps.app.goo.gl/CrBtZoPSprZKJRPV6"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs sm:text-[13px] text-slate-600 hover:text-[#96794F] hover:underline transition-colors block leading-relaxed"
+              title="Bấm để mở Google Maps chỉ đường"
+            >
               {firmInfo.hanoiOffice}
-            </p>
+            </a>
             <p className="text-[11px] text-[#96794F] font-semibold pt-1 border-t border-slate-100">
               Số ĐKHĐ: {firmInfo.licenseNumber}
             </p>
