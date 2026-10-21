@@ -5,21 +5,24 @@ import Link from "next/link";
 import { Search, Phone, ChevronRight } from "lucide-react";
 import { usefulArticles, firmInfo } from "@/data/mockData";
 import { formatAmpersand } from "@/components/ui/Ampersand";
+import { useLiveArticles } from "@/lib/useLiveArticles";
 
 export const BlogSidebar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { articles } = useLiveArticles();
+  const allArticles = articles.length > 0 ? articles : usefulArticles;
 
   const categories = [
-    { name: "Tất cả bài viết", count: usefulArticles.length, href: "/blog/" },
-    { name: "Luật sở hữu trí tuệ", count: usefulArticles.filter(a => a.serviceSlug === "luat-so-huu-tri-tue").length, href: "/service/luat-so-huu-tri-tue/" },
-    { name: "Luật doanh nghiệp", count: usefulArticles.filter(a => a.serviceSlug === "luat-doanh-nghiep").length, href: "/service/luat-doanh-nghiep/" },
-    { name: "Luật hôn nhân & gia đình", count: usefulArticles.filter(a => a.serviceSlug === "luat-hon-nhan-va-gia-dinh").length, href: "/service/luat-hon-nhan-va-gia-dinh/" },
-    { name: "Luật dân sự", count: usefulArticles.filter(a => a.serviceSlug === "luat-dan-su").length, href: "/service/luat-dan-su/" },
-    { name: "Luật đất đai", count: usefulArticles.filter(a => a.serviceSlug === "luat-dat-dai").length, href: "/service/luat-dat-dai/" },
-    { name: "Luật hình sự", count: usefulArticles.filter(a => a.serviceSlug === "luat-hinh-su").length, href: "/service/luat-hinh-su/" },
-    { name: "Luật hành chính", count: usefulArticles.filter(a => a.serviceSlug === "luat-hanh-chinh").length, href: "/service/luat-hanh-chinh/" },
-    { name: "Luật đầu tư", count: usefulArticles.filter(a => a.serviceSlug === "luat-dau-tu").length, href: "/service/luat-dau-tu/" },
-    { name: "Dịch vụ khác", count: usefulArticles.filter(a => a.serviceSlug === "dich-vu-khac").length, href: "/service/dich-vu-khac/" },
+    { name: "Tất cả bài viết", count: allArticles.length, href: "/blog/" },
+    { name: "Luật sở hữu trí tuệ", count: allArticles.filter(a => a.serviceSlug === "luat-so-huu-tri-tue").length, href: "/service/luat-so-huu-tri-tue/" },
+    { name: "Luật doanh nghiệp", count: allArticles.filter(a => a.serviceSlug === "luat-doanh-nghiep").length, href: "/service/luat-doanh-nghiep/" },
+    { name: "Luật hôn nhân & gia đình", count: allArticles.filter(a => a.serviceSlug === "luat-hon-nhan-va-gia-dinh").length, href: "/service/luat-hon-nhan-va-gia-dinh/" },
+    { name: "Luật dân sự", count: allArticles.filter(a => a.serviceSlug === "luat-dan-su").length, href: "/service/luat-dan-su/" },
+    { name: "Luật đất đai", count: allArticles.filter(a => a.serviceSlug === "luat-dat-dai").length, href: "/service/luat-dat-dai/" },
+    { name: "Luật hình sự", count: allArticles.filter(a => a.serviceSlug === "luat-hinh-su").length, href: "/service/luat-hinh-su/" },
+    { name: "Luật hành chính", count: allArticles.filter(a => a.serviceSlug === "luat-hanh-chinh").length, href: "/service/luat-hanh-chinh/" },
+    { name: "Luật đầu tư", count: allArticles.filter(a => a.serviceSlug === "luat-dau-tu").length, href: "/service/luat-dau-tu/" },
+    { name: "Dịch vụ khác", count: allArticles.filter(a => a.serviceSlug === "dich-vu-khac").length, href: "/service/dich-vu-khac/" },
   ];
 
   return (
@@ -61,7 +64,7 @@ export const BlogSidebar: React.FC = () => {
           Bài viết mới nhất
         </h3>
         <ul className="space-y-3.5 divide-y divide-slate-100 text-[13.5px]">
-          {usefulArticles.slice(0, 5).map((post) => (
+          {allArticles.slice(0, 5).map((post) => (
             <li key={post.id} className="pt-3.5 first:pt-0">
               <Link
                 href={`/blog/${post.slug}/`}

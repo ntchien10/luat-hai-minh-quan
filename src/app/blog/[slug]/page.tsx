@@ -1,7 +1,6 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import { Calendar, User, List, MessageSquare, Tag, Share2, Scale, ArrowLeft } from "lucide-react";
 import { Header } from "@/components/layout/Header";
@@ -10,6 +9,7 @@ import { BlogSidebar } from "@/components/blog/BlogSidebar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingContact } from "@/components/ui/FloatingContact";
 import { usefulArticles, firmInfo, teamMembersList } from "@/data/mockData";
+import { BlogPostLiveDetail } from "@/components/blog/BlogPostLiveDetail";
 
 export async function generateStaticParams() {
   return usefulArticles.map((article) => ({
@@ -99,7 +99,7 @@ export default async function BlogPostDetailPage({
   const post = usefulArticles.find((p) => p.slug === slug);
 
   if (!post) {
-    notFound();
+    return <BlogPostLiveDetail slug={slug} />;
   }
 
   const categoryRelated = usefulArticles.filter(

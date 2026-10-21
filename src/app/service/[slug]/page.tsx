@@ -1,10 +1,8 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Metadata } from "next";
 import {
-  Calendar,
   ChevronRight,
   Scale,
   Sparkles,
@@ -15,6 +13,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingContact } from "@/components/ui/FloatingContact";
 import { practiceServices, allNavigationServices, firmInfo, usefulArticles } from "@/data/mockData";
+import { ServiceArticlesLive } from "@/components/service/ServiceArticlesLive";
 
 // Ánh xạ tương thích ngược các slug cũ để không bao giờ bị lỗi 404
 const SLUG_ALIASES: Record<string, string> = {
@@ -383,64 +382,12 @@ export default async function ServiceDetailPage({
                 {renderNormalAmpersand("Cẩm Nang & Hướng Dẫn Pháp Lý")}
               </h2>
 
-              {/* Articles Grid (3 Columns on Desktop, 1 on Mobile) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayArticles.map((art) => (
-                  <article
-                    key={art.id}
-                    className="group bg-white border border-slate-200/90 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between overflow-hidden hover:border-[#96794F]/60"
-                  >
-                    <Link href={`/blog/${art.slug}/`} className="block overflow-hidden">
-                      {/* Image Thumbnail */}
-                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-100">
-                        <Image
-                          src={art.imageUrl}
-                          alt={art.title}
-                          width={600}
-                          height={375}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-4 space-y-2">
-                        <h3 className="font-serif text-[15px] sm:text-[16px] font-bold text-[#1A1816] group-hover:text-[#96794F] transition-colors line-clamp-2 leading-snug">
-                          {renderNormalAmpersand(art.title)}
-                        </h3>
-
-                        {/* Small Divider */}
-                        <div className="w-8 h-[2px] bg-[#96794F]/40 group-hover:w-14 group-hover:bg-[#96794F] transition-all duration-300 my-1.5" />
-
-                        <p className="text-xs sm:text-[13px] text-slate-600 line-clamp-3 leading-relaxed">
-                          {art.excerpt}
-                        </p>
-                      </div>
-                    </Link>
-
-                    {/* Card Footer */}
-                    <div className="px-4 pb-3.5 pt-1 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                        <Calendar className="w-3.5 h-3.5 text-[#96794F]" />
-                        <span>{art.date}</span>
-                      </span>
-                      <Link
-                        href={`/blog/${art.slug}/`}
-                        className="font-semibold text-[#96794F] hover:text-[#7E643E] flex items-center gap-1 text-[11.5px]"
-                      >
-                        <span>Xem tiếp</span>
-                        <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                      </Link>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              {displayArticles.length === 0 && (
-                <div className="p-10 text-center bg-slate-50 border border-slate-200 text-slate-500 space-y-2">
-                  <p className="font-serif text-lg font-bold text-[#1A1816]">Nội dung đang được cập nhật</p>
-                  <p className="text-sm">Vui lòng liên hệ Hotline <strong>{firmInfo.hotline}</strong> để được các Luật sư tư vấn trực tiếp.</p>
-                </div>
-              )}
+              {/* Real-time Dynamic Articles Grid with fallback */}
+              <ServiceArticlesLive
+                serviceSlug={service.slug}
+                serviceTitle={service.title}
+                initialArticles={displayArticles}
+              />
             </section>
 
             {/* 4. Why Choose Us (H2) */}
