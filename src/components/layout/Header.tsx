@@ -289,18 +289,26 @@ export const Header: React.FC = () => {
       {/* Container ẩn của Google Translate */}
       <div id="google_translate_element" style={{ display: "none" }} />
 
-      {/* TOPBAR (Thanh thông tin đầu trang - Dark Forest Green chuẩn thương hiệu Luật Á Châu & Hải Minh Quân) */}
-      <div className="bg-[#0E3A24] text-white text-xs font-medium py-2 border-b border-white/10">
+      {/* TOPBAR (Thanh thông tin đầu trang - Tone màu Xanh Navy #0F1E36 & Vàng Gold #96794F đồng bộ Luật Hải Minh Quân) */}
+      <div className="bg-[#0F1E36] text-white text-xs font-medium py-2 border-b border-[#96794F]/25 shadow-sm">
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Bên trái: Địa chỉ | Email | Hotline */}
+          {/* Bên trái: Địa chỉ (Hyperlink Google Maps) | Email | Hotline */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-slate-200 text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
-            {/* Địa chỉ */}
-            <div className="flex items-center gap-1.5 truncate">
-              <MapPin className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
-              <span className="truncate" title={firmInfo.headquarters}>
+            {/* Địa chỉ - Click mở Google Maps chỉ đường */}
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                firmInfo.headquarters
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 truncate hover:text-[#DFBA73] transition-colors cursor-pointer group"
+              title={`Bấm để mở Google Maps chỉ đường:\n${firmInfo.headquarters}`}
+            >
+              <MapPin className="w-3.5 h-3.5 text-[#DFBA73] shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate underline-offset-2 hover:underline">
                 {firmInfo.addressShort}
               </span>
-            </div>
+            </a>
 
             <span className="text-white/25 select-none hidden md:inline">|</span>
 
@@ -841,6 +849,19 @@ export const Header: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Địa chỉ trên mobile (Link mở Google Maps) */}
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+              firmInfo.headquarters
+            )}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 py-2 text-xs text-slate-600 hover:text-[#96794F] border-b border-slate-100"
+          >
+            <MapPin className="w-3.5 h-3.5 text-[#96794F] shrink-0" />
+            <span className="truncate">{firmInfo.headquarters}</span>
+          </a>
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}

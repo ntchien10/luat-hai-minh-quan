@@ -529,14 +529,6 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
         }
         className="p-4 min-h-[300px] max-h-[550px] overflow-y-auto text-slate-800 text-[14.5px] leading-relaxed focus:outline-none article-rich-content empty:before:content-[attr(data-placeholder)] empty:before:text-slate-400 empty:before:italic"
       />
-
-      {/* Thanh hướng dẫn nhỏ bên dưới */}
-      <div className="px-3 py-1.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-        <span>
-          💡 <strong>Mẹo:</strong> Bạn có thể copy trực tiếp từ Word, Google Docs, Website rồi bấm <strong>Ctrl+V / Cmd+V</strong>, toàn bộ chữ in đậm, tiêu đề và danh sách sẽ được giữ nguyên 100%!
-        </span>
-        <span className="font-mono text-[10px] text-slate-400">WYSIWYG Direct</span>
-      </div>
     </div>
   );
 }
