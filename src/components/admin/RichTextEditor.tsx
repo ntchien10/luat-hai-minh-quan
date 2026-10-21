@@ -5,8 +5,6 @@ import {
   Bold,
   Italic,
   Underline,
-  Heading2,
-  Heading3,
   List,
   ListOrdered,
   Quote,
@@ -25,7 +23,7 @@ interface Props {
 
 /**
  * Làm sạch mã HTML từ Word / Google Docs / Website
- * ĐẢM BẢO 100% MỌI CHỮ IN ĐẬM ĐƯỢC GIỮ NGUYÊN (thẻ strong, b, h1-h6, font-weight >= 600, class bold/semibold)
+ * ĐẢM BẢO 100% MỌI CHỮ IN ĐẬM VÀ TIÊU ĐỀ TỪ WORD ĐỀU ĐƯỢC GIỮ NGUYÊN
  */
 function cleanPastedHtml(rawHtml: string): string {
   if (typeof window === "undefined" || typeof DOMParser === "undefined") {
@@ -33,22 +31,91 @@ function cleanPastedHtml(rawHtml: string): string {
   }
 
   try {
+    // 1. TRÍCH XUẤT CÁC CLASS IN ĐẬM TỪ THẺ <style> CỦA WORD (ví dụ: .MsoHeading1, .BoldText)
+    const boldClasses = new Set<string>();
+    const italicClasses = new Set<string>();
+
+    const styleMatches = rawHtml.match(/<style[^>]*>([\s\S]*?)<\/style>/gi) || [];
+    for (const sm of styleMatches) {
+      const css = sm.replace(/<\/?style[^>]*>/gi, "");
+      const rules = css.match(/([^{]+)\{([^}]+)\}/g) || [];
+      for (const r of rules) {
+        const parts = r.split("{");
+        const sel = parts[0] || "";
+        const decl = parts[1] || "";
+        if (
+          /font-weight\s*:\s*(?:bold|bolder|[6-9]\d{2})|mso-bidi-font-weight\s*:\s*bold/i.test(
+            decl
+          )
+        ) {
+          const classes = sel.match(/\.([a-zA-Z0-9_-]+)/g) || [];
+          for (const c of classes) {
+            boldClasses.add(c.replace(".", "").toLowerCase());
+          }
+        }
+        if (/font-style\s*:\s*italic|mso-bidi-font-style\s*:\s*italic/i.test(decl)) {
+          const classes = sel.match(/\.([a-zA-Z0-9_-]+)/g) || [];
+          for (const c of classes) {
+            italicClasses.add(c.replace(".", "").toLowerCase());
+          }
+        }
+      }
+    }
+
+    // 2. PARSE HTML VÀO DOM
     const parser = new DOMParser();
     const doc = parser.parseFromString(rawHtml, "text/html");
 
-    // 1. Xóa các thẻ rác hệ thống (script, style, meta, link, xml, o:p của Word)
+    // Xóa rác hệ thống (script, style, meta, link, xml, thẻ o:p của Word)
     doc
-      .querySelectorAll("script, style, meta, link, xml, o\\:p")
+      .querySelectorAll("script, style, meta, link, xml, o\\:p, w\\:worddocument")
       .forEach((el) => el.remove());
 
-    // 2. Chuyển đổi H1 thành H2 (chuẩn SEO: mỗi bài viết chỉ có 1 thẻ H1 duy nhất)
-    doc.querySelectorAll("h1").forEach((h1) => {
-      const h2 = doc.createElement("h2");
-      h2.innerHTML = h1.innerHTML;
-      h1.parentNode?.replaceChild(h2, h1);
+    // 3. CHUYỂN ĐỔI TIÊU ĐỀ WORD (MsoHeading1, MsoHeading2, mso-outline-level, h1)
+    doc.querySelectorAll("*").forEach((el) => {
+      const tagName = el.tagName.toLowerCase();
+      const styleAttr = el.getAttribute("style") || "";
+      const classAttr = el.getAttribute("class") || "";
+
+      const isHeading1 =
+        tagName === "h1" ||
+        /outline-level:\s*1/i.test(styleAttr) ||
+        /\b(?:msoheading1|msotitle)\b/i.test(classAttr);
+
+      const isHeading2 =
+        tagName === "h2" ||
+        /outline-level:\s*2/i.test(styleAttr) ||
+        /\b(?:msoheading2|msosubtitle)\b/i.test(classAttr);
+
+      const isHeading3 =
+        tagName === "h3" ||
+        /outline-level:\s*3/i.test(styleAttr) ||
+        /\bmsoheading3\b/i.test(classAttr);
+
+      if (isHeading1 && tagName !== "h2") {
+        const h2 = doc.createElement("h2");
+        h2.innerHTML = el.innerHTML;
+        el.parentNode?.replaceChild(h2, el);
+      } else if ((isHeading2 || isHeading3) && tagName !== "h3") {
+        const h3 = doc.createElement("h3");
+        h3.innerHTML = el.innerHTML;
+        el.parentNode?.replaceChild(h3, el);
+      }
     });
 
-    // 3. Quét TẤT CẢ các thẻ để phát hiện in đậm (font-weight >= 600, bold, class bold)
+    // 4. CHUẨN HÓA <b> THÀNH <strong>, <i> THÀNH <em>
+    doc.querySelectorAll("b").forEach((b) => {
+      const strong = doc.createElement("strong");
+      strong.innerHTML = b.innerHTML;
+      b.parentNode?.replaceChild(strong, b);
+    });
+    doc.querySelectorAll("i").forEach((i) => {
+      const em = doc.createElement("em");
+      em.innerHTML = i.innerHTML;
+      i.parentNode?.replaceChild(em, i);
+    });
+
+    // 5. QUÉT TOÀN BỘ CÁC PHẦN TỬ ĐỂ BẢO VỆ ĐỊNH DẠNG IN ĐẬM TỪ WORD & WEB
     const allEls = Array.from(doc.body.querySelectorAll("*"));
     for (const el of allEls) {
       if (!el.parentNode) continue;
@@ -56,43 +123,42 @@ function cleanPastedHtml(rawHtml: string): string {
       const tagName = el.tagName.toLowerCase();
       const styleAttr = el.getAttribute("style") || "";
       const classAttr = el.getAttribute("class") || "";
+      const classList = Array.from(el.classList).map((c) => c.toLowerCase());
 
       // Kiểm tra in đậm từ MỌI nguồn:
-      const styleWeight = htmlEl.style?.fontWeight || "";
-      const isBoldStyle =
-        styleWeight === "bold" ||
-        styleWeight === "bolder" ||
-        parseInt(styleWeight, 10) >= 600 ||
-        /font-weight\s*:\s*(?:bold|bolder|[6-9]\d{2})/i.test(styleAttr);
+      const hasBoldClass =
+        classList.some((c) => boldClasses.has(c)) ||
+        /\b(?:bold|font-bold|font-semibold|fw-bold|fw-bolder|semibold|charbold)\b/i.test(
+          classAttr
+        );
 
-      const isBoldClass =
-        /\b(?:bold|font-bold|font-semibold|fw-bold|fw-bolder|semibold)\b/i.test(classAttr);
+      const hasBoldStyle =
+        htmlEl.style?.fontWeight === "bold" ||
+        htmlEl.style?.fontWeight === "bolder" ||
+        parseInt(htmlEl.style?.fontWeight || "", 10) >= 600 ||
+        /font-weight\s*:\s*(?:bold|bolder|[6-9]\d{2})/i.test(styleAttr) ||
+        /mso-bidi-font-weight\s*:\s*bold/i.test(styleAttr);
 
       const isHeadingTag = ["h1", "h2", "h3", "h4", "h5", "h6"].includes(tagName);
 
-      const isBold = isBoldStyle || isBoldClass || tagName === "b" || tagName === "strong";
+      const isBold = hasBoldClass || hasBoldStyle || isHeadingTag;
 
-      // Kiểm tra in nghiêng
-      const styleStyle = htmlEl.style?.fontStyle || "";
-      const isItalic =
-        styleStyle === "italic" ||
-        styleStyle === "oblique" ||
-        /font-style\s*:\s*italic/i.test(styleAttr) ||
-        /\b(?:italic|fst-italic)\b/i.test(classAttr) ||
-        tagName === "i" ||
-        tagName === "em";
+      // In nghiêng
+      const hasItalicClass =
+        classList.some((c) => italicClasses.has(c)) ||
+        /\b(?:italic|fst-italic)\b/i.test(classAttr);
+      const hasItalicStyle =
+        /font-style\s*:\s*(?:italic|oblique)/i.test(styleAttr) ||
+        /mso-bidi-font-style\s*:\s*italic/i.test(styleAttr);
+      const isItalic = hasItalicClass || hasItalicStyle;
 
-      // Kiểm tra gạch chân
-      const textDecor = htmlEl.style?.textDecoration || "";
+      // Gạch chân
       const isUnderline =
-        textDecor.includes("underline") ||
-        /text-decoration\s*:[^;]*underline/i.test(styleAttr) ||
-        /\b(?:underline|text-decoration-underline)\b/i.test(classAttr) ||
-        tagName === "u";
+        /text-decoration\s*:[^;]*underline/i.test(styleAttr) || tagName === "u";
 
-      // Nếu phần tử có định dạng in đậm và chưa được bọc trong strong/b/heading
-      if (isBold && tagName !== "strong" && tagName !== "b" && !isHeadingTag) {
-        if (!el.closest("strong") && !el.closest("b") && !el.closest("h1, h2, h3, h4, h5, h6")) {
+      // Nếu phần tử có định dạng in đậm và chưa nằm trong thẻ in đậm / tiêu đề
+      if (isBold && tagName !== "strong" && !isHeadingTag) {
+        if (!el.closest("strong") && !el.closest("h1, h2, h3, h4, h5, h6")) {
           const strong = doc.createElement("strong");
           strong.innerHTML = el.innerHTML;
           el.innerHTML = "";
@@ -101,8 +167,8 @@ function cleanPastedHtml(rawHtml: string): string {
       }
 
       // Xử lý in nghiêng
-      if (isItalic && tagName !== "em" && tagName !== "i") {
-        if (!el.closest("em") && !el.closest("i")) {
+      if (isItalic && tagName !== "em") {
+        if (!el.closest("em")) {
           const em = doc.createElement("em");
           em.innerHTML = el.innerHTML;
           el.innerHTML = "";
@@ -121,30 +187,22 @@ function cleanPastedHtml(rawHtml: string): string {
       }
     }
 
-    // 4. Chuẩn hóa <b> thành <strong>, <i> thành <em>
-    doc.querySelectorAll("b").forEach((b) => {
-      const strong = doc.createElement("strong");
-      strong.innerHTML = b.innerHTML;
-      b.parentNode?.replaceChild(strong, b);
-    });
-    doc.querySelectorAll("i").forEach((i) => {
-      const em = doc.createElement("em");
-      em.innerHTML = i.innerHTML;
-      i.parentNode?.replaceChild(em, i);
-    });
-
-    // 5. Giải phóng các thẻ font và span không cần thiết
+    // 6. GIẢI PHÓNG SPAN KHÔNG MANG MÀU SẮC
     doc.querySelectorAll("font, span").forEach((sp) => {
-      const parent = sp.parentNode;
-      if (parent) {
-        while (sp.firstChild) {
-          parent.insertBefore(sp.firstChild, sp);
+      const color = (sp as HTMLElement).style?.color;
+      // Nếu span không có màu đặc biệt thì unwrap để HTML sạch sẽ
+      if (!color || /rgb\(0,\s*0,\s*0\)|#000000|#000/i.test(color)) {
+        const parent = sp.parentNode;
+        if (parent) {
+          while (sp.firstChild) {
+            parent.insertBefore(sp.firstChild, sp);
+          }
+          parent.removeChild(sp);
         }
-        parent.removeChild(sp);
       }
     });
 
-    // 6. Làm sạch thuộc tính rác, chỉ giữ lại các thuộc tính có ích
+    // 7. LÀM SẠCH THUỘC TÍNH RÁC, GIỮ LẠI ĐỊNH DẠNG HỢP LỆ
     const allowedAttrs = ["href", "src", "alt", "title", "colspan", "rowspan", "target"];
     doc.querySelectorAll("*").forEach((el) => {
       const htmlEl = el as HTMLElement;
@@ -162,7 +220,7 @@ function cleanPastedHtml(rawHtml: string): string {
       if (textAlign && ["center", "right", "justify", "left"].includes(textAlign)) {
         htmlEl.style.textAlign = textAlign;
       }
-      // Giữ màu chữ nổi bật (như màu xanh của câu hỏi)
+      // Giữ màu chữ nổi bật (như màu xanh dương của câu hỏi trong Word)
       if (color && !/rgb\(0,\s*0,\s*0\)|#000000|#000/i.test(color)) {
         htmlEl.style.color = color;
       }
@@ -193,6 +251,11 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
       const updated = editorRef.current.innerHTML;
       onChange(updated);
     }
+  };
+
+  // Ngăn chặn nút bấm làm mất vùng chọn (selection) trong editor khi người dùng click
+  const handleToolbarMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
   };
 
   const handleInput = () => {
@@ -305,61 +368,66 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
   return (
     <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm focus-within:border-[#96794F] transition-colors">
       {/* Thanh công cụ định dạng trực quan */}
-      <div className="flex flex-wrap items-center gap-1 p-2 bg-slate-50 border-b border-slate-200 text-slate-700 text-xs select-none">
+      <div className="flex flex-wrap items-center gap-1.5 p-2 bg-slate-50 border-b border-slate-200 text-slate-700 text-xs select-none">
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("bold")}
           title="In đậm (Ctrl+B)"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors font-bold"
         >
-          <Bold className="w-3.5 h-3.5" />
+          <Bold className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("italic")}
           title="In nghiêng (Ctrl+I)"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors italic"
         >
-          <Italic className="w-3.5 h-3.5" />
+          <Italic className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("underline")}
           title="Gạch chân (Ctrl+U)"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors underline"
         >
-          <Underline className="w-3.5 h-3.5" />
+          <Underline className="w-4 h-4" />
         </button>
 
         <span className="w-[1px] h-4 bg-slate-300 mx-1" />
 
+        {/* Nút H2 & H3 chữ đơn thuần túy (không bị lặp lại 2 chữ H2 H2) */}
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("formatBlock", "<h2>")}
           title="Tiêu đề mục lớn (H2)"
-          className="px-2 py-1 rounded hover:bg-slate-200 transition-colors font-serif font-bold text-xs flex items-center gap-1"
+          className="px-2.5 py-1 rounded hover:bg-slate-200 transition-colors font-serif font-bold text-xs text-[#96794F]"
         >
-          <Heading2 className="w-3.5 h-3.5 text-[#96794F]" />
-          <span>H2</span>
+          H2
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("formatBlock", "<h3>")}
           title="Tiêu đề mục nhỏ (H3)"
-          className="px-2 py-1 rounded hover:bg-slate-200 transition-colors font-serif font-bold text-xs flex items-center gap-1"
+          className="px-2.5 py-1 rounded hover:bg-slate-200 transition-colors font-serif font-bold text-xs text-slate-700"
         >
-          <Heading3 className="w-3.5 h-3.5 text-slate-600" />
-          <span>H3</span>
+          H3
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("formatBlock", "<p>")}
           title="Đoạn văn bình thường (Paragraph)"
-          className="px-1.5 py-1 rounded hover:bg-slate-200 transition-colors font-sans text-xs"
+          className="px-2 py-1 rounded hover:bg-slate-200 transition-colors font-sans text-xs text-slate-700"
         >
           ¶ Văn bản
         </button>
@@ -368,76 +436,84 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("insertUnorderedList")}
           title="Danh sách gạch đầu dòng"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors"
         >
-          <List className="w-3.5 h-3.5" />
+          <List className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("insertOrderedList")}
           title="Danh sách đánh số (1, 2, 3)"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors"
         >
-          <ListOrdered className="w-3.5 h-3.5" />
+          <ListOrdered className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("formatBlock", "<blockquote>")}
           title="Đoạn trích dẫn / Lời khuyên luật sư"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors"
         >
-          <Quote className="w-3.5 h-3.5" />
+          <Quote className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={handleAddLink}
           title="Chèn liên kết đường dẫn"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors"
         >
-          <LinkIcon className="w-3.5 h-3.5" />
+          <LinkIcon className="w-4 h-4" />
         </button>
 
         <span className="w-[1px] h-4 bg-slate-300 mx-1" />
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("justifyLeft")}
           title="Căn trái"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors"
         >
-          <AlignLeft className="w-3.5 h-3.5" />
+          <AlignLeft className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("justifyCenter")}
           title="Căn giữa"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors"
         >
-          <AlignCenter className="w-3.5 h-3.5" />
+          <AlignCenter className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("justifyFull")}
           title="Căn đều 2 bên"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors"
         >
-          <AlignJustify className="w-3.5 h-3.5" />
+          <AlignJustify className="w-4 h-4" />
         </button>
 
         <button
           type="button"
+          onMouseDown={handleToolbarMouseDown}
           onClick={() => exec("removeFormat")}
           title="Xóa định dạng rác"
           className="p-1.5 rounded hover:bg-slate-200 transition-colors text-slate-500 hover:text-red-600"
         >
-          <Eraser className="w-3.5 h-3.5" />
+          <Eraser className="w-4 h-4" />
         </button>
       </div>
 
