@@ -14,6 +14,8 @@ import {
   Loader2,
   AlertCircle,
   FileText,
+  Download,
+  Upload,
 } from "lucide-react";
 import {
   fetchArticles,
@@ -240,6 +242,50 @@ export default function ArticlesAdminPage() {
     await loadArticles();
   };
 
+  const handleExportBackup = () => {
+    try {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(articles, null, 2));
+      const downloadAnchor = document.createElement("a");
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `hmq_articles_backup_${new Date().toISOString().split("T")[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch (e) {
+      alert("Không thể xuất file sao lưu: " + e);
+    }
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+        if (Array.isArray(json) && json.length > 0) {
+          if (!confirm(`Bạn có chắc chắn muốn khôi phục ${json.length} bài viết từ file sao lưu này không?`)) {
+            return;
+          }
+          setIsLoading(true);
+          for (const item of json) {
+            await saveArticle(item);
+          }
+          await loadArticles();
+          alert(`Đã khôi phục thành công ${json.length} bài viết vào hệ thống!`);
+        } else {
+          alert("File sao lưu không hợp lệ hoặc không có bài viết nào.");
+        }
+      } catch (err) {
+        alert("Lỗi khi đọc file sao lưu: " + err);
+      } finally {
+        setIsLoading(false);
+        e.target.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
+
   // Filtered list
   const filteredArticles = articles.filter((a) => {
     const matchesSearch =
@@ -265,14 +311,40 @@ export default function ArticlesAdminPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#96794F] hover:bg-[#7d633e] text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer shrink-0"
-        >
-          <Plus className="w-4 h-4" />
-          Thêm bài viết mới
-        </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleExportBackup}
+            title="Tải về file sao lưu toàn bộ bài viết để lưu trữ trên máy tính"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-600" />
+            <span>Sao lưu (JSON)</span>
+          </button>
+
+          <label
+            title="Khôi phục toàn bộ bài viết từ file JSON sao lưu trước đó"
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 transition-colors cursor-pointer"
+          >
+            <Upload className="w-3.5 h-3.5 text-slate-600" />
+            <span>Khôi phục</span>
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleImportBackup}
+              className="hidden"
+            />
+          </label>
+
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#96794F] hover:bg-[#7d633e] text-white text-xs font-bold rounded-lg shadow-sm transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            Thêm bài viết mới
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar */}
