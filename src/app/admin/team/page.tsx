@@ -298,14 +298,14 @@ export default function TeamAdminPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse min-w-[960px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="py-3 px-4">Luật sư / Thành viên</th>
-                  <th className="py-3 px-4">Chức danh</th>
-                  <th className="py-3 px-4">Số thẻ / Liên hệ</th>
-                  <th className="py-3 px-4 text-center">Hiển thị ngoài web</th>
-                  <th className="py-3 px-4 text-right">Thao tác</th>
+                  <th className="py-3.5 px-4 min-w-[280px]">Luật sư / Thành viên</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[160px]">Chức danh</th>
+                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[180px]">Số thẻ / Liên hệ</th>
+                  <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[150px]">Hiển thị ngoài web</th>
+                  <th className="py-3.5 px-4 text-right whitespace-nowrap min-w-[120px] pr-6">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
@@ -322,24 +322,24 @@ export default function TeamAdminPage() {
                             unoptimized
                           />
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-slate-900 text-sm">
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-slate-900 text-sm whitespace-nowrap">
                             {member.name}
                           </h4>
-                          <span className="text-[11px] text-slate-400 font-mono">
+                          <span className="text-[11px] text-slate-400 font-mono truncate block">
                             {member.link}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <span className="font-medium text-slate-800">
                         {member.role}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4">
+                    <td className="py-3.5 px-4 whitespace-nowrap">
                       <div className="space-y-0.5 text-slate-600">
                         {member.card_no && (
                           <div className="text-[11px] font-mono text-[#96794F] font-semibold">
@@ -351,11 +351,11 @@ export default function TeamAdminPage() {
                     </td>
 
                     {/* Toggle Active Switch */}
-                    <td className="py-3.5 px-4 text-center">
+                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleToggleActive(member)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                           member.is_active
                             ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                             : "bg-slate-100 text-slate-500 hover:bg-slate-200"
@@ -376,13 +376,13 @@ export default function TeamAdminPage() {
                       </button>
                     </td>
 
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="py-3.5 px-4 text-right whitespace-nowrap pr-6">
+                      <div className="flex items-center justify-end gap-1.5">
                         <Link
                           href={member.link}
                           target="_blank"
                           title="Xem trang cá nhân"
-                          className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded"
+                          className="p-1.5 text-slate-400 hover:text-[#96794F] hover:bg-slate-100 rounded transition-colors"
                         >
                           <Eye className="w-4 h-4" />
                         </Link>
@@ -390,7 +390,7 @@ export default function TeamAdminPage() {
                           type="button"
                           onClick={() => openEditModal(member)}
                           title="Chỉnh sửa"
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
@@ -398,7 +398,7 @@ export default function TeamAdminPage() {
                           type="button"
                           onClick={() => handleDelete(member.id, member.name)}
                           title="Xóa"
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>

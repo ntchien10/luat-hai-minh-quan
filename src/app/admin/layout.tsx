@@ -117,7 +117,7 @@ export default function AdminLayout({
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
       {/* Top Navigation Bar */}
       <header className="bg-[#0F1E36] text-white sticky top-0 z-50 border-b border-[#96794F]/30 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -208,9 +208,9 @@ export default function AdminLayout({
       </header>
 
       {/* Main Container with Sidebar + Content */}
-      <div className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex gap-8">
+      <div className="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-5 lg:px-6 py-5 flex flex-col lg:flex-row gap-5">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:block w-64 shrink-0">
+        <aside className="hidden lg:block w-56 xl:w-60 shrink-0">
           <nav className="bg-white rounded-lg border border-slate-200 shadow-sm p-3 space-y-1 sticky top-24">
             <div className="px-3 py-2 text-xs font-bold uppercase tracking-wider text-slate-400">
               Danh mục quản trị
