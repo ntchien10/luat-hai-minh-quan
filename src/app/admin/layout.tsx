@@ -137,14 +137,14 @@ export default function AdminLayout({
             </button>
 
             <Link href="/admin/" className="flex items-center gap-3.5 group">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/10 p-1.5 border border-[#96794F]/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-md">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-white p-0.5 border border-[#96794F]/50 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-md">
                 <Image
                   src="/images/logo.png"
                   alt="Công ty Luật TNHH Hải Minh Quân"
-                  width={64}
-                  height={64}
+                  width={56}
+                  height={56}
                   priority
-                  className="w-full h-full object-contain drop-shadow"
+                  className="w-full h-full object-contain"
                 />
               </div>
               <div>
