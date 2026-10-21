@@ -15,6 +15,7 @@ export const LegalServiceSchema: React.FC = () => {
     name: firmInfo.name,
     alternateName: "HMQ Law Firm",
     legalName: firmInfo.name,
+    identifier: firmInfo.licenseNumber,
     url: SITE_URL,
     logo: `${SITE_URL}/images/logo.png`,
     image: `${SITE_URL}/images/about/about-court.jpg`,

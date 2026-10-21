@@ -91,6 +91,9 @@ export default function ContactPage() {
             <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed">
               {firmInfo.hanoiOffice}
             </p>
+            <p className="text-[11px] text-[#96794F] font-semibold pt-1 border-t border-slate-100">
+              Số ĐKHĐ: {firmInfo.licenseNumber}
+            </p>
           </div>
 
           {/* Card 4 */}
