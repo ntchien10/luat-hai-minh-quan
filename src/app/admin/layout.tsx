@@ -14,8 +14,8 @@ import {
   Menu,
   X,
   Database,
+  Server,
 } from "lucide-react";
-import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function AdminLayout({
   children,
@@ -40,25 +40,11 @@ export default function AdminLayout({
       await Promise.resolve();
       if (!isMounted) return;
 
-      // 1. Kiểm tra session demo local
-      const demoSession = typeof window !== "undefined" ? localStorage.getItem("hmq_admin_session") : null;
-      if (demoSession) {
-        setUserEmail(demoSession);
+      const session = typeof window !== "undefined" ? localStorage.getItem("hmq_admin_session") : null;
+      if (session) {
+        setUserEmail(session);
         setIsLoading(false);
         return;
-      }
-
-      // 2. Kiểm tra Supabase Auth nếu đã cấu hình
-      if (isSupabaseConfigured()) {
-        const supabase = getSupabase();
-        if (supabase) {
-          const { data } = await supabase.auth.getSession();
-          if (data?.session?.user && isMounted) {
-            setUserEmail(data.session.user.email || "Admin");
-            setIsLoading(false);
-            return;
-          }
-        }
       }
 
       // Chưa đăng nhập -> chuyển về /admin/login/
@@ -74,13 +60,10 @@ export default function AdminLayout({
     };
   }, [pathname, isLoginPage, router]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("hmq_admin_session");
-    }
-    const supabase = getSupabase();
-    if (supabase) {
-      await supabase.auth.signOut();
+      localStorage.removeItem("hmq_admin_token");
     }
     router.push("/admin/login/");
   };
@@ -130,8 +113,6 @@ export default function AdminLayout({
     },
   ];
 
-  const hasSupabase = isSupabaseConfigured();
-
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
       {/* Top Navigation Bar */}
@@ -155,27 +136,17 @@ export default function AdminLayout({
                   HẢI MINH QUÂN
                 </span>
                 <span className="text-[10px] text-[#96794F] font-semibold tracking-wider uppercase block">
-                  Hệ Thống Quản Trị
+                  Hệ Thống Quản Trị CMS
                 </span>
               </div>
             </Link>
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Supabase status badge */}
-            <div
-              className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium ${
-                hasSupabase
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                  : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
-              }`}
-            >
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  hasSupabase ? "bg-emerald-400" : "bg-amber-400"
-                }`}
-              />
-              {hasSupabase ? "Supabase đã kết nối" : "Chưa gắn Supabase key"}
+            {/* Host SQLite status badge */}
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <Server className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Hosting PHP &amp; SQLite (100% Free)</span>
             </div>
 
             {/* Public site link */}
@@ -270,9 +241,9 @@ export default function AdminLayout({
               <div className="px-3 py-2 bg-slate-50 rounded text-xs text-slate-500">
                 <div className="flex items-center gap-1.5 font-semibold text-slate-700 mb-1">
                   <ShieldCheck className="w-4 h-4 text-[#96794F]" />
-                  Phiên bản 1.0 CMS
+                  Phiên bản 1.0 CMS Host
                 </div>
-                Luật Hải Minh Quân - Hệ thống quản lý dữ liệu trực tiếp.
+                Luật Hải Minh Quân - Hệ thống quản lý dữ liệu trực tiếp trên Hosting.
               </div>
             </div>
           </nav>

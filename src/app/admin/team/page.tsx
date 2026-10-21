@@ -18,13 +18,12 @@ import {
   ToggleRight,
 } from "lucide-react";
 import {
-  fetchTeamMembersFromSupabase,
-  saveTeamMemberToSupabase,
-  deleteTeamMemberFromSupabase,
+  fetchTeamMembers,
+  saveTeamMember,
+  deleteTeamMember,
   toggleTeamMemberActive,
-  isSupabaseConfigured,
   DbTeamMember,
-} from "@/lib/supabase";
+} from "@/lib/api";
 import { allTeamMembersArchive } from "@/data/mockData";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 
@@ -76,52 +75,34 @@ export default function TeamAdminPage() {
   const [experienceText, setExperienceText] = useState("");
   const [expertiseText, setExpertiseText] = useState("");
 
-  const hasSupabase = isSupabaseConfigured();
-
   const loadMembers = useCallback(async () => {
-    await Promise.resolve();
-    if (hasSupabase) {
-      const res = await fetchTeamMembersFromSupabase();
-      if (res.members.length > 0) {
-        setMembers(res.members);
-        setIsLoading(false);
-        return;
-      }
+    setIsLoading(true);
+    const res = await fetchTeamMembers();
+    if (res.members && res.members.length > 0) {
+      setMembers(res.members);
+    } else {
+      const fallback: DbTeamMember[] = allTeamMembersArchive.map((m, idx) => ({
+        id: m.id,
+        slug: m.link.replace("/thanh-vien/", "").replace(/\/$/, ""),
+        name: m.name,
+        role: m.role,
+        image_url: m.imageUrl,
+        link: m.link,
+        phone: m.phone || "0967 932 555",
+        email: m.email || "luathaiminhquan@gmail.com",
+        card_no: m.cardNo || "",
+        qualifications: m.qualifications || [],
+        experience: m.experience || [],
+        expertise: m.expertise || [],
+        bio: m.bio || "",
+        is_active: idx === 0, // Chỉ Ls. Đỗ Thị Thanh Hải active mặc định
+        order_index: idx,
+      }));
+
+      setMembers(fallback);
     }
-
-    // Fallback load
-    const localSaved = typeof window !== "undefined" ? localStorage.getItem("hmq_local_members") : null;
-    if (localSaved) {
-      try {
-        setMembers(JSON.parse(localSaved));
-        setIsLoading(false);
-        return;
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    const fallback: DbTeamMember[] = allTeamMembersArchive.map((m, idx) => ({
-      id: m.id,
-      slug: m.link.replace("/thanh-vien/", "").replace(/\/$/, ""),
-      name: m.name,
-      role: m.role,
-      image_url: m.imageUrl,
-      link: m.link,
-      phone: m.phone || "0967 932 555",
-      email: m.email || "luathaiminhquan@gmail.com",
-      card_no: m.cardNo || "",
-      qualifications: m.qualifications || [],
-      experience: m.experience || [],
-      expertise: m.expertise || [],
-      bio: m.bio || "",
-      is_active: idx === 0, // Chỉ Ls. Đỗ Thị Thanh Hải active mặc định
-      order_index: idx,
-    }));
-
-    setMembers(fallback);
     setIsLoading(false);
-  }, [hasSupabase]);
+  }, []);
 
   useEffect(() => {
     loadMembers();
@@ -174,21 +155,13 @@ export default function TeamAdminPage() {
   const handleToggleActive = async (member: DbTeamMember) => {
     const newStatus = !member.is_active;
 
-    if (hasSupabase) {
-      const res = await toggleTeamMemberActive(member.id, newStatus);
-      if (!res.success) {
-        alert(`Lỗi: ${res.error}`);
-        return;
-      }
+    const res = await toggleTeamMemberActive(member.id, newStatus);
+    if (!res.success) {
+      alert(`Lỗi: ${res.error || "Không thể cập nhật trạng thái"}`);
+      return;
     }
 
-    const updated = members.map((m) =>
-      m.id === member.id ? { ...m, is_active: newStatus } : m
-    );
-    setMembers(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("hmq_local_members", JSON.stringify(updated));
-    }
+    await loadMembers();
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -228,26 +201,16 @@ export default function TeamAdminPage() {
     setIsSaving(true);
     setModalError(null);
 
-    if (hasSupabase) {
-      const res = await saveTeamMemberToSupabase(finalPayload);
-      if (!res.success) {
-        setModalError(res.error || "Lỗi khi lưu dữ liệu lên Supabase.");
-        setIsSaving(false);
-        return;
-      }
-    } else {
-      const updated = isEditing
-        ? members.map((m) => (m.id === finalPayload.id ? finalPayload : m))
-        : [...members, finalPayload];
-      setMembers(updated);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("hmq_local_members", JSON.stringify(updated));
-      }
+    const res = await saveTeamMember(finalPayload);
+    if (!res.success) {
+      setModalError(res.error || "Lỗi khi lưu dữ liệu lên Database.");
+      setIsSaving(false);
+      return;
     }
 
     setIsSaving(false);
     setIsModalOpen(false);
-    loadMembers();
+    await loadMembers();
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -255,19 +218,13 @@ export default function TeamAdminPage() {
       return;
     }
 
-    if (hasSupabase) {
-      const res = await deleteTeamMemberFromSupabase(id);
-      if (!res.success) {
-        alert(`Lỗi: ${res.error}`);
-        return;
-      }
+    const res = await deleteTeamMember(id);
+    if (!res.success) {
+      alert(`Lỗi: ${res.error || "Không thể xóa thành viên"}`);
+      return;
     }
 
-    const updated = members.filter((m) => m.id !== id);
-    setMembers(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("hmq_local_members", JSON.stringify(updated));
-    }
+    await loadMembers();
   };
 
   const filteredMembers = members.filter(
@@ -574,7 +531,7 @@ export default function TeamAdminPage() {
                     setFormData((prev) => ({ ...prev, image_url: url }))
                   }
                   folder="team"
-                  label="Ảnh chân dung Luật sư (Tải lên Supabase Storage) *"
+                  label="Ảnh chân dung Luật sư (Lưu trữ trực tiếp trên Hosting /uploads/) *"
                   description="Ảnh chân dung tỷ lệ 3:4 hoặc vuông, chân thực và sắc nét"
                 />
               </div>

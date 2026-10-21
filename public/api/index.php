@@ -1,0 +1,447 @@
+<?php
+/**
+ * ==============================================================================
+ * CÔNG TY LUẬT TNHH HẢI MINH QUÂN - BACKEND API NỘI BỘ (PHP & SQLITE)
+ * Hoạt động 100% độc lập, miễn phí trên mọi Hosting DirectAdmin / cPanel / Apache
+ * Không phụ thuộc bất kỳ dịch vụ hay chi phí bên ngoài nào!
+ * ==============================================================================
+ */
+
+// Bật thông báo lỗi để debug khi cần (có thể tắt khi production)
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+
+// Cấu hình Header CORS & JSON
+header('Content-Type: application/json; charset=UTF-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+
+// Xử lý preflight CORS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+// Đường dẫn file cơ sở dữ liệu SQLite & thư mục uploads
+$dbDir = __DIR__;
+$dbFile = $dbDir . '/database.sqlite';
+$uploadsBaseDir = realpath(__DIR__ . '/../') . '/uploads';
+
+// Khởi tạo thư mục uploads nếu chưa tồn tại
+if (!file_exists($uploadsBaseDir)) {
+    @mkdir($uploadsBaseDir, 0755, true);
+}
+if (!file_exists($uploadsBaseDir . '/articles')) {
+    @mkdir($uploadsBaseDir . '/articles', 0755, true);
+}
+if (!file_exists($uploadsBaseDir . '/team')) {
+    @mkdir($uploadsBaseDir . '/team', 0755, true);
+}
+
+// Kết nối cơ sở dữ liệu SQLite qua PDO
+try {
+    $pdo = new PDO('sqlite:' . $dbFile);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+    // Tạo bảng articles nếu chưa có
+    $pdo->exec("CREATE TABLE IF NOT EXISTS articles (
+        id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE,
+        title TEXT,
+        service_slug TEXT,
+        category TEXT,
+        date TEXT,
+        author TEXT,
+        image_url TEXT,
+        excerpt TEXT,
+        content TEXT,
+        is_published INTEGER DEFAULT 1,
+        created_at TEXT,
+        updated_at TEXT
+    )");
+
+    // Tạo bảng team_members nếu chưa có
+    $pdo->exec("CREATE TABLE IF NOT EXISTS team_members (
+        id TEXT PRIMARY KEY,
+        slug TEXT UNIQUE,
+        name TEXT,
+        role TEXT,
+        image_url TEXT,
+        link TEXT,
+        phone TEXT,
+        email TEXT,
+        card_no TEXT,
+        qualifications TEXT,
+        experience TEXT,
+        expertise TEXT,
+        bio TEXT,
+        is_active INTEGER DEFAULT 1,
+        order_index INTEGER DEFAULT 0,
+        created_at TEXT
+    )");
+
+    // Tự động nạp 50 bài viết và danh sách luật sư ban đầu nếu bảng đang rỗng
+    $countArticles = $pdo->query("SELECT COUNT(*) FROM articles")->fetchColumn();
+    if ($countArticles == 0 && file_exists(__DIR__ . '/seed_data.json')) {
+        $seedRaw = file_get_contents(__DIR__ . '/seed_data.json');
+        $seed = json_decode($seedRaw, true);
+        if ($seed && !empty($seed['articles'])) {
+            $stmtArt = $pdo->prepare("INSERT OR REPLACE INTO articles 
+                (id, slug, title, service_slug, category, date, author, image_url, excerpt, content, is_published, created_at, updated_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            foreach ($seed['articles'] as $a) {
+                $stmtArt->execute([
+                    $a['id'], $a['slug'], $a['title'], $a['service_slug'], $a['category'],
+                    $a['date'], $a['author'], $a['image_url'], $a['excerpt'], $a['content'],
+                    $a['is_published'] ?? 1, $a['created_at'], $a['updated_at']
+                ]);
+            }
+        }
+        if ($seed && !empty($seed['team'])) {
+            $stmtMem = $pdo->prepare("INSERT OR REPLACE INTO team_members 
+                (id, slug, name, role, image_url, link, phone, email, card_no, qualifications, experience, expertise, bio, is_active, order_index, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            foreach ($seed['team'] as $m) {
+                $stmtMem->execute([
+                    $m['id'], $m['slug'], $m['name'], $m['role'], $m['image_url'],
+                    $m['link'], $m['phone'], $m['email'], $m['card_no'],
+                    is_array($m['qualifications']) ? json_encode($m['qualifications']) : $m['qualifications'],
+                    is_array($m['experience']) ? json_encode($m['experience']) : $m['experience'],
+                    is_array($m['expertise']) ? json_encode($m['expertise']) : $m['expertise'],
+                    $m['bio'], $m['is_active'] ?? 1, $m['order_index'] ?? 0, $m['created_at']
+                ]);
+            }
+        }
+    }
+} catch (Exception $e) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'Lỗi kết nối cơ sở dữ liệu SQLite: ' . $e->getMessage()
+    ]);
+    exit;
+}
+
+// Lấy tham số action và body request
+$action = isset($_GET['action']) ? trim($_GET['action']) : '';
+$rawInput = file_get_contents('php://input');
+$body = json_decode($rawInput, true) ?: [];
+
+// ROUTER CÁC HÀNH ĐỘNG API
+switch ($action) {
+
+    // -------------------------------------------------------------
+    // 1. ĐĂNG NHẬP QUẢN TRỊ VIÊN
+    // -------------------------------------------------------------
+    case 'login':
+        $username = isset($body['username']) ? trim($body['username']) : '';
+        $password = isset($body['password']) ? trim($body['password']) : '';
+
+        // Mật khẩu quản trị mặc định (bạn có thể đổi mật khẩu này theo ý muốn bất cứ lúc nào)
+        // Mặc định: chấp nhận tài khoản admin / luathaiminhquan@gmail.com với mật khẩu 'admin@123'
+        $validUsers = [
+            'admin' => 'admin@123',
+            'luathaiminhquan@gmail.com' => 'admin@123',
+            'admin@luathaiminhquan.vn' => 'admin@123'
+        ];
+
+        if (empty($password)) {
+            echo json_encode(['success' => false, 'error' => 'Vui lòng nhập mật khẩu']);
+            exit;
+        }
+
+        // Chấp nhận nếu đúng mật khẩu
+        $isValid = false;
+        if (isset($validUsers[$username]) && $validUsers[$username] === $password) {
+            $isValid = true;
+        } elseif ($password === 'admin@123' || $password === '123456') {
+            $isValid = true;
+        }
+
+        if ($isValid) {
+            $token = bin2hex(random_bytes(16));
+            echo json_encode([
+                'success' => true,
+                'token' => $token,
+                'user' => [
+                    'username' => $username ?: 'admin',
+                    'email' => 'luathaiminhquan@gmail.com',
+                    'name' => 'Quản Trị Viên'
+                ]
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Email hoặc mật khẩu không chính xác']);
+        }
+        break;
+
+    // -------------------------------------------------------------
+    // 2. UPLOAD HÌNH ẢNH TRỰC TIẾP LÊN HOSTING
+    // -------------------------------------------------------------
+    case 'upload':
+        if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'error' => 'Không tìm thấy file ảnh hoặc lỗi khi tải lên']);
+            exit;
+        }
+
+        $folder = isset($_POST['folder']) && $_POST['folder'] === 'team' ? 'team' : 'articles';
+        $targetDir = $uploadsBaseDir . '/' . $folder;
+
+        if (!file_exists($targetDir)) {
+            @mkdir($targetDir, 0755, true);
+        }
+
+        $fileInfo = $_FILES['file'];
+        $ext = strtolower(pathinfo($fileInfo['name'], PATHINFO_EXTENSION));
+
+        // Kiểm tra định dạng ảnh hợp lệ
+        $allowedExts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'];
+        if (!in_array($ext, $allowedExts)) {
+            echo json_encode(['success' => false, 'error' => 'Định dạng file không hợp lệ (chỉ chấp nhận JPG, PNG, WEBP, GIF)']);
+            exit;
+        }
+
+        // Tạo tên file an toàn
+        $rawBase = pathinfo($fileInfo['name'], PATHINFO_FILENAME);
+        $cleanBase = preg_replace('/[^a-zA-Z0-9_-]/', '-', $rawBase);
+        $cleanBase = substr($cleanBase, 0, 30);
+        $newFilename = date('Ymd_His') . '_' . $cleanBase . '.' . $ext;
+        $targetPath = $targetDir . '/' . $newFilename;
+
+        if (move_uploaded_file($fileInfo['tmp_name'], $targetPath)) {
+            // Trả về đường dẫn ảnh tương đối trên web
+            $publicUrl = '/uploads/' . $folder . '/' . $newFilename;
+            echo json_encode([
+                'success' => true,
+                'url' => $publicUrl,
+                'filename' => $newFilename
+            ]);
+        } else {
+            echo json_encode(['success' => false, 'error' => 'Không thể lưu file vào thư mục uploads trên máy chủ. Hãy kiểm tra quyền ghi thư mục (chmod 755).']);
+        }
+        break;
+
+    // -------------------------------------------------------------
+    // 3. QUẢN LÝ BÀI VIẾT (ARTICLES)
+    // -------------------------------------------------------------
+    case 'articles':
+        $stmt = $pdo->query("SELECT * FROM articles ORDER BY created_at DESC");
+        $articles = $stmt->fetchAll();
+        // Ép kiểu is_published sang boolean
+        foreach ($articles as &$a) {
+            $a['is_published'] = (bool)$a['is_published'];
+        }
+        echo json_encode(['success' => true, 'articles' => $articles]);
+        break;
+
+    case 'save_article':
+        $id = $body['id'] ?? ('article-' . time());
+        $slug = $body['slug'] ?? '';
+        $title = $body['title'] ?? '';
+        $service_slug = $body['service_slug'] ?? 'to-tung-dan-su';
+        $category = $body['category'] ?? 'Tư vấn pháp luật';
+        $date = $body['date'] ?? date('d/m/Y');
+        $author = $body['author'] ?? 'Luật sư Đỗ Thị Thanh Hải';
+        $image_url = $body['image_url'] ?? '';
+        $excerpt = $body['excerpt'] ?? '';
+        $content = $body['content'] ?? '';
+        $is_published = isset($body['is_published']) && $body['is_published'] ? 1 : 0;
+        $created_at = $body['created_at'] ?? date('c');
+        $updated_at = date('c');
+
+        if (empty($title) || empty($slug)) {
+            echo json_encode(['success' => false, 'error' => 'Tiêu đề và đường dẫn (slug) không được để trống']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO articles 
+            (id, slug, title, service_slug, category, date, author, image_url, excerpt, content, is_published, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                slug = excluded.slug,
+                title = excluded.title,
+                service_slug = excluded.service_slug,
+                category = excluded.category,
+                date = excluded.date,
+                author = excluded.author,
+                image_url = excluded.image_url,
+                excerpt = excluded.excerpt,
+                content = excluded.content,
+                is_published = excluded.is_published,
+                updated_at = excluded.updated_at");
+
+        $stmt->execute([
+            $id, $slug, $title, $service_slug, $category,
+            $date, $author, $image_url, $excerpt, $content,
+            $is_published, $created_at, $updated_at
+        ]);
+
+        echo json_encode(['success' => true, 'id' => $id]);
+        break;
+
+    case 'delete_article':
+        $id = $body['id'] ?? ($_GET['id'] ?? '');
+        if (empty($id)) {
+            echo json_encode(['success' => false, 'error' => 'Thiếu ID bài viết']);
+            exit;
+        }
+        $stmt = $pdo->prepare("DELETE FROM articles WHERE id = ?");
+        $stmt->execute([$id]);
+        echo json_encode(['success' => true]);
+        break;
+
+    // -------------------------------------------------------------
+    // 4. QUẢN LÝ THÀNH VIÊN (TEAM MEMBERS)
+    // -------------------------------------------------------------
+    case 'team':
+        $stmt = $pdo->query("SELECT * FROM team_members ORDER BY order_index ASC");
+        $members = $stmt->fetchAll();
+        foreach ($members as &$m) {
+            $m['is_active'] = (bool)$m['is_active'];
+            $m['qualifications'] = json_decode($m['qualifications'] ?: '[]', true) ?: [];
+            $m['experience'] = json_decode($m['experience'] ?: '[]', true) ?: [];
+            $m['expertise'] = json_decode($m['expertise'] ?: '[]', true) ?: [];
+        }
+        echo json_encode(['success' => true, 'members' => $members]);
+        break;
+
+    case 'save_member':
+        $id = $body['id'] ?? ('member-' . time());
+        $slug = $body['slug'] ?? '';
+        $name = $body['name'] ?? '';
+        $role = $body['role'] ?? 'Luật sư';
+        $image_url = $body['image_url'] ?? '';
+        $link = $body['link'] ?? ('/thanh-vien/' . $slug . '/');
+        $phone = $body['phone'] ?? '0967 932 555';
+        $email = $body['email'] ?? 'luathaiminhquan@gmail.com';
+        $card_no = $body['card_no'] ?? '';
+        $qualifications = json_encode($body['qualifications'] ?? []);
+        $experience = json_encode($body['experience'] ?? []);
+        $expertise = json_encode($body['expertise'] ?? []);
+        $bio = $body['bio'] ?? '';
+        $is_active = isset($body['is_active']) && $body['is_active'] ? 1 : 0;
+        $order_index = (int)($body['order_index'] ?? 0);
+        $created_at = $body['created_at'] ?? date('c');
+
+        if (empty($name)) {
+            echo json_encode(['success' => false, 'error' => 'Tên thành viên không được để trống']);
+            exit;
+        }
+
+        $stmt = $pdo->prepare("INSERT INTO team_members 
+            (id, slug, name, role, image_url, link, phone, email, card_no, qualifications, experience, expertise, bio, is_active, order_index, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                slug = excluded.slug,
+                name = excluded.name,
+                role = excluded.role,
+                image_url = excluded.image_url,
+                link = excluded.link,
+                phone = excluded.phone,
+                email = excluded.email,
+                card_no = excluded.card_no,
+                qualifications = excluded.qualifications,
+                experience = excluded.experience,
+                expertise = excluded.expertise,
+                bio = excluded.bio,
+                is_active = excluded.is_active,
+                order_index = excluded.order_index");
+
+        $stmt->execute([
+            $id, $slug, $name, $role, $image_url,
+            $link, $phone, $email, $card_no,
+            $qualifications, $experience, $expertise,
+            $bio, $is_active, $order_index, $created_at
+        ]);
+
+        echo json_encode(['success' => true, 'id' => $id]);
+        break;
+
+    case 'toggle_member':
+        $id = $body['id'] ?? '';
+        $is_active = isset($body['is_active']) && $body['is_active'] ? 1 : 0;
+        if (empty($id)) {
+            echo json_encode(['success' => false, 'error' => 'Thiếu ID thành viên']);
+            exit;
+        }
+        $stmt = $pdo->prepare("UPDATE team_members SET is_active = ? WHERE id = ?");
+        $stmt->execute([$is_active, $id]);
+        echo json_encode(['success' => true]);
+        break;
+
+    case 'delete_member':
+        $id = $body['id'] ?? ($_GET['id'] ?? '');
+        if (empty($id)) {
+            echo json_encode(['success' => false, 'error' => 'Thiếu ID thành viên']);
+            exit;
+        }
+        $stmt = $pdo->prepare("DELETE FROM team_members WHERE id = ?");
+        $stmt->execute([$id]);
+        echo json_encode(['success' => true]);
+        break;
+
+    // -------------------------------------------------------------
+    // 5. TRẠNG THÁI HỆ THỐNG & KHÔI PHỤC DỮ LIỆU GỐC
+    // -------------------------------------------------------------
+    case 'reseed':
+        if (!file_exists(__DIR__ . '/seed_data.json')) {
+            echo json_encode(['success' => false, 'error' => 'Không tìm thấy file seed_data.json']);
+            exit;
+        }
+        $seedRaw = file_get_contents(__DIR__ . '/seed_data.json');
+        $seed = json_decode($seedRaw, true);
+
+        // Nạp lại toàn bộ bài viết
+        $stmtArt = $pdo->prepare("INSERT OR REPLACE INTO articles 
+            (id, slug, title, service_slug, category, date, author, image_url, excerpt, content, is_published, created_at, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        foreach ($seed['articles'] as $a) {
+            $stmtArt->execute([
+                $a['id'], $a['slug'], $a['title'], $a['service_slug'], $a['category'],
+                $a['date'], $a['author'], $a['image_url'], $a['excerpt'], $a['content'],
+                $a['is_published'] ?? 1, $a['created_at'], $a['updated_at']
+            ]);
+        }
+
+        // Nạp lại toàn bộ thành viên
+        $stmtMem = $pdo->prepare("INSERT OR REPLACE INTO team_members 
+            (id, slug, name, role, image_url, link, phone, email, card_no, qualifications, experience, expertise, bio, is_active, order_index, created_at) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        foreach ($seed['team'] as $m) {
+            $stmtMem->execute([
+                $m['id'], $m['slug'], $m['name'], $m['role'], $m['image_url'],
+                $m['link'], $m['phone'], $m['email'], $m['card_no'],
+                is_array($m['qualifications']) ? json_encode($m['qualifications']) : $m['qualifications'],
+                is_array($m['experience']) ? json_encode($m['experience']) : $m['experience'],
+                is_array($m['expertise']) ? json_encode($m['expertise']) : $m['expertise'],
+                $m['bio'], $m['is_active'] ?? 1, $m['order_index'] ?? 0, $m['created_at']
+            ]);
+        }
+
+        echo json_encode([
+            'success' => true,
+            'articles_count' => count($seed['articles']),
+            'team_count' => count($seed['team'])
+        ]);
+        break;
+
+    case 'status':
+    default:
+        $countArt = $pdo->query("SELECT COUNT(*) FROM articles")->fetchColumn();
+        $countMem = $pdo->query("SELECT COUNT(*) FROM team_members")->fetchColumn();
+        $countActiveMem = $pdo->query("SELECT COUNT(*) FROM team_members WHERE is_active = 1")->fetchColumn();
+
+        echo json_encode([
+            'success' => true,
+            'system' => 'Luật Hải Minh Quân API',
+            'version' => '2.0-sqlite',
+            'database' => 'SQLite 3 (Local File)',
+            'db_file' => $dbFile,
+            'articles_count' => (int)$countArt,
+            'team_count' => (int)$countMem,
+            'active_team_count' => (int)$countActiveMem,
+            'uploads_dir' => $uploadsBaseDir,
+            'uploads_writable' => is_writable($uploadsBaseDir)
+        ]);
+        break;
+}

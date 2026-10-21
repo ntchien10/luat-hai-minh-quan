@@ -17,12 +17,11 @@ import {
   FileText,
 } from "lucide-react";
 import {
-  fetchArticlesFromSupabase,
-  saveArticleToSupabase,
-  deleteArticleFromSupabase,
-  isSupabaseConfigured,
+  fetchArticles,
+  saveArticle,
+  deleteArticle,
   DbArticle,
-} from "@/lib/supabase";
+} from "@/lib/api";
 import { allArticlesData } from "@/data/articlesData";
 import { practiceServices } from "@/data/mockData";
 import { ImageUploader } from "@/components/admin/ImageUploader";
@@ -67,47 +66,29 @@ export default function ArticlesAdminPage() {
     is_published: true,
   });
 
-  const hasSupabase = isSupabaseConfigured();
-
   const loadArticles = useCallback(async () => {
-    await Promise.resolve();
-    if (hasSupabase) {
-      const res = await fetchArticlesFromSupabase();
-      if (res.articles.length > 0) {
-        setArticles(res.articles);
-        setIsLoading(false);
-        return;
-      }
+    setIsLoading(true);
+    const res = await fetchArticles();
+    if (res.articles && res.articles.length > 0) {
+      setArticles(res.articles);
+    } else {
+      const fallback: DbArticle[] = allArticlesData.map((a) => ({
+        id: a.id,
+        slug: a.slug,
+        title: a.title,
+        service_slug: a.serviceSlug,
+        category: a.category,
+        date: a.date,
+        author: a.author,
+        image_url: a.imageUrl,
+        excerpt: a.excerpt,
+        content: a.content,
+        is_published: true,
+      }));
+      setArticles(fallback);
     }
-
-    // Fallback load from static data
-    const localSaved = typeof window !== "undefined" ? localStorage.getItem("hmq_local_articles") : null;
-    if (localSaved) {
-      try {
-        setArticles(JSON.parse(localSaved));
-        setIsLoading(false);
-        return;
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    const fallback: DbArticle[] = allArticlesData.map((a) => ({
-      id: a.id,
-      slug: a.slug,
-      title: a.title,
-      service_slug: a.serviceSlug,
-      category: a.category,
-      date: a.date,
-      author: a.author,
-      image_url: a.imageUrl,
-      excerpt: a.excerpt,
-      content: a.content,
-      is_published: true,
-    }));
-    setArticles(fallback);
     setIsLoading(false);
-  }, [hasSupabase]);
+  }, []);
 
   useEffect(() => {
     loadArticles();
@@ -176,27 +157,16 @@ export default function ArticlesAdminPage() {
     setIsSaving(true);
     setModalError(null);
 
-    if (hasSupabase) {
-      const res = await saveArticleToSupabase(formData);
-      if (!res.success) {
-        setModalError(res.error || "Lỗi khi lưu bài viết lên Supabase.");
-        setIsSaving(false);
-        return;
-      }
-    } else {
-      // Local storage fallback
-      const updated = isEditing
-        ? articles.map((a) => (a.id === formData.id ? formData : a))
-        : [formData, ...articles];
-      setArticles(updated);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("hmq_local_articles", JSON.stringify(updated));
-      }
+    const res = await saveArticle(formData);
+    if (!res.success) {
+      setModalError(res.error || "Lỗi khi lưu bài viết vào Database.");
+      setIsSaving(false);
+      return;
     }
 
     setIsSaving(false);
     setIsModalOpen(false);
-    loadArticles();
+    await loadArticles();
   };
 
   const handleDelete = async (id: string, title: string) => {
@@ -204,19 +174,13 @@ export default function ArticlesAdminPage() {
       return;
     }
 
-    if (hasSupabase) {
-      const res = await deleteArticleFromSupabase(id);
-      if (!res.success) {
-        alert(`Lỗi: ${res.error}`);
-        return;
-      }
+    const res = await deleteArticle(id);
+    if (!res.success) {
+      alert(`Lỗi: ${res.error || "Không thể xóa bài viết"}`);
+      return;
     }
 
-    const updated = articles.filter((a) => a.id !== id);
-    setArticles(updated);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("hmq_local_articles", JSON.stringify(updated));
-    }
+    await loadArticles();
   };
 
   // Filtered list
@@ -524,7 +488,7 @@ export default function ArticlesAdminPage() {
                     setFormData((prev) => ({ ...prev, image_url: url }))
                   }
                   folder="articles"
-                  label="Ảnh bài viết (Tải lên Supabase Storage) *"
+                  label="Ảnh bài viết (Lưu trữ trực tiếp trên Hosting /uploads/) *"
                   description="Ảnh tỷ lệ 16:9 hoặc 3:2, dung lượng tối đa 5MB"
                 />
               </div>

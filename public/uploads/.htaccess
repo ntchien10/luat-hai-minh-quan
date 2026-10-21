@@ -1,0 +1,24 @@
+# ==============================================================================
+# BẢO MẬT THƯ MỤC UPLOADS
+# Cho phép xem ảnh tĩnh (jpg, png, webp, gif, svg)
+# Chặn hoàn toàn thực thi mã PHP trong thư mục uploads để chống mã độc
+# ==============================================================================
+
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Chặn thực thi mã PHP
+<FilesMatch "\.(php|php5|php7|phtml|phar)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Tắt PHP engine nếu mod_php khả dụng
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>

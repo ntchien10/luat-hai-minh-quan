@@ -1,351 +1,289 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
+  Server,
   Database,
-  Copy,
-  Check,
+  FolderArchive,
   RefreshCw,
-  ExternalLink,
+  CheckCircle2,
   KeyRound,
-  FileCheck2,
+  ShieldCheck,
+  DownloadCloud,
 } from "lucide-react";
-import {
-  isSupabaseConfigured,
-  seedInitialDataToSupabase,
-  fetchArticlesFromSupabase,
-} from "@/lib/supabase";
+import { reseedDatabase, getSystemStatus } from "@/lib/api";
 
 export default function SetupAdminPage() {
-  const [copied, setCopied] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
   const [seedStatus, setSeedStatus] = useState<string | null>(null);
-  const [testResult, setTestResult] = useState<string | null>(null);
-  const [isTesting, setIsTesting] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const [systemInfo, setSystemInfo] = useState<{
+    database?: string;
+    articles_count?: number;
+    team_count?: number;
+    uploads_writable?: boolean;
+    online?: boolean;
+  }>({});
 
-  const hasSupabase = isSupabaseConfigured();
-
-  const sqlScript = `-- ==============================================================================
--- CÔNG TY LUẬT TNHH HẢI MINH QUÂN - SUPABASE DATABASE INITIALIZATION SCRIPT
--- Copy và dán toàn bộ đoạn mã này vào mục: Supabase Dashboard -> SQL Editor -> Run
--- ==============================================================================
-
--- 1. BẢNG BÀI VIẾT & CẨM NANG PHÁP LÝ (articles)
-CREATE TABLE IF NOT EXISTS public.articles (
-  id TEXT PRIMARY KEY,
-  slug TEXT NOT NULL UNIQUE,
-  title TEXT NOT NULL,
-  service_slug TEXT DEFAULT 'to-tung-dan-su',
-  category TEXT DEFAULT 'Tư vấn pháp luật',
-  date TEXT DEFAULT '',
-  author TEXT DEFAULT 'Luật sư Đỗ Thị Thanh Hải',
-  image_url TEXT DEFAULT '',
-  excerpt TEXT DEFAULT '',
-  content TEXT DEFAULT '',
-  is_published BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_articles_slug ON public.articles(slug);
-CREATE INDEX IF NOT EXISTS idx_articles_service_slug ON public.articles(service_slug);
-CREATE INDEX IF NOT EXISTS idx_articles_created_at ON public.articles(created_at DESC);
-
-ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public can view published articles" ON public.articles;
-CREATE POLICY "Public can view published articles" 
-ON public.articles FOR SELECT 
-USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can manage articles" ON public.articles;
-CREATE POLICY "Authenticated users can manage articles" 
-ON public.articles FOR ALL 
-TO authenticated 
-USING (true) 
-WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Anon can manage articles during dev" ON public.articles;
-CREATE POLICY "Anon can manage articles during dev" 
-ON public.articles FOR ALL 
-TO anon 
-USING (true) 
-WITH CHECK (true);
-
--- 2. BẢNG ĐỘI NGŨ LUẬT SƯ & THÀNH VIÊN (team_members)
-CREATE TABLE IF NOT EXISTS public.team_members (
-  id TEXT PRIMARY KEY,
-  slug TEXT NOT NULL UNIQUE,
-  name TEXT NOT NULL,
-  role TEXT NOT NULL,
-  image_url TEXT DEFAULT '',
-  link TEXT DEFAULT '',
-  phone TEXT DEFAULT '0967 932 555',
-  email TEXT DEFAULT 'luathaiminhquan@gmail.com',
-  card_no TEXT DEFAULT '',
-  qualifications JSONB DEFAULT '[]'::jsonb,
-  experience JSONB DEFAULT '[]'::jsonb,
-  expertise JSONB DEFAULT '[]'::jsonb,
-  bio TEXT DEFAULT '',
-  is_active BOOLEAN DEFAULT true,
-  order_index INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_team_members_slug ON public.team_members(slug);
-CREATE INDEX IF NOT EXISTS idx_team_members_order ON public.team_members(order_index ASC);
-
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Public can view active team members" ON public.team_members;
-CREATE POLICY "Public can view active team members" 
-ON public.team_members FOR SELECT 
-USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can manage team members" ON public.team_members;
-CREATE POLICY "Authenticated users can manage team members" 
-ON public.team_members FOR ALL 
-TO authenticated 
-USING (true) 
-WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Anon can manage team members during dev" ON public.team_members;
-CREATE POLICY "Anon can manage team members during dev" 
-ON public.team_members FOR ALL 
-TO anon 
-USING (true) 
-WITH CHECK (true);
-
--- 3. CẤU HÌNH STORAGE BUCKET CHO UPLOAD HÌNH ẢNH (law-firm-media)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('law-firm-media', 'law-firm-media', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
-
-DROP POLICY IF EXISTS "Public Access" ON storage.objects;
-CREATE POLICY "Public Access" 
-ON storage.objects FOR SELECT 
-USING (bucket_id = 'law-firm-media');
-
-DROP POLICY IF EXISTS "Allow Upload Media" ON storage.objects;
-CREATE POLICY "Allow Upload Media" 
-ON storage.objects FOR INSERT 
-WITH CHECK (bucket_id = 'law-firm-media');
-
-DROP POLICY IF EXISTS "Allow Update and Delete Media" ON storage.objects;
-CREATE POLICY "Allow Update and Delete Media" 
-ON storage.objects FOR UPDATE 
-USING (bucket_id = 'law-firm-media');
-
-DROP POLICY IF EXISTS "Allow Delete Media" ON storage.objects;
-CREATE POLICY "Allow Delete Media" 
-ON storage.objects FOR DELETE 
-USING (bucket_id = 'law-firm-media');`;
-
-  const copySql = () => {
-    navigator.clipboard.writeText(sqlScript);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
-  const handleTestConnection = async () => {
-    setIsTesting(true);
-    setTestResult(null);
-
-    if (!hasSupabase) {
-      setTestResult("❌ Chưa phát hiện biến môi trường NEXT_PUBLIC_SUPABASE_URL và NEXT_PUBLIC_SUPABASE_ANON_KEY trong file .env.local");
-      setIsTesting(false);
-      return;
-    }
-
-    const res = await fetchArticlesFromSupabase();
-    setIsTesting(false);
-
-    if (res.error) {
-      setTestResult(`❌ Lỗi kết nối Supabase: ${res.error}. Hãy kiểm tra xem bạn đã chạy đoạn SQL khởi tạo bảng chưa.`);
+  const checkStatus = async () => {
+    setIsChecking(true);
+    const res = await getSystemStatus();
+    setIsChecking(false);
+    if (res.success) {
+      setSystemInfo({
+        database: res.database,
+        articles_count: res.articles_count,
+        team_count: res.team_count,
+        uploads_writable: res.uploads_writable,
+        online: true,
+      });
     } else {
-      setTestResult(`✅ Kết nối Supabase thành công! Hiện có ${res.articles.length} bài viết trong bảng articles.`);
+      setSystemInfo({ online: false });
     }
   };
+
+  useEffect(() => {
+    checkStatus();
+  }, []);
 
   const handleSeed = async () => {
-    if (!hasSupabase) {
-      alert("Vui lòng nạp biến môi trường Supabase trong .env.local trước khi đồng bộ.");
-      return;
-    }
-
-    if (!confirm("Hệ thống sẽ nạp 40+ bài viết và dữ liệu đội ngũ luật sư lên Supabase. Tiếp tục?")) {
+    if (
+      !confirm(
+        "Thao tác này sẽ nạp lại toàn bộ 50 bài viết mẫu và 6 luật sư vào file Database SQLite trên host. Bạn có muốn tiếp tục?"
+      )
+    ) {
       return;
     }
 
     setIsSeeding(true);
     setSeedStatus(null);
 
-    const res = await seedInitialDataToSupabase();
+    const res = await reseedDatabase();
     setIsSeeding(false);
 
     if (res.error) {
-      setSeedStatus(`❌ ${res.error}`);
+      setSeedStatus(`❌ Lỗi: ${res.error}`);
     } else {
-      setSeedStatus(`✅ Nạp thành công ${res.articlesCount} bài viết và ${res.membersCount} luật sư lên Supabase!`);
+      setSeedStatus(
+        `✅ Thành công! Đã nạp ${res.articles_count ?? 50} bài viết và ${res.team_count ?? 6} thành viên vào Database.`
+      );
+      checkStatus();
     }
   };
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <h1 className="font-serif text-2xl font-bold text-slate-900">
-          Cài Đặt Hệ Thống & Hướng Dẫn Supabase
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Kết nối Database PostgreSQL và Storage lưu trữ ảnh trên đám mây Supabase
-        </p>
+      {/* Page Title */}
+      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#96794F] mb-1">
+            <Server className="w-4 h-4" />
+            Hệ Thống Lưu Trữ Nội Bộ Trực Tiếp Trên Hosting
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-slate-900">
+            Cài Đặt, Cơ Sở Dữ Liệu &amp; Sao Lưu
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            Giải pháp 100% Miễn Phí trọn đời • Không phụ thuộc Supabase • Chạy độc lập trên PHP &amp; SQLite
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={checkStatus}
+          disabled={isChecking}
+          className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition-colors cursor-pointer shrink-0"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? "animate-spin" : ""}`} />
+          {isChecking ? "Đang kiểm tra..." : "Kiểm tra kết nối"}
+        </button>
       </div>
 
-      {/* Status Card */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-2">
-          <Database className="w-4 h-4 text-[#96794F]" />
-          Trạng thái kết nối Supabase hiện tại
-        </h2>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-lg bg-slate-50 border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-3.5 h-3.5 rounded-full ${
-                hasSupabase ? "bg-emerald-500" : "bg-amber-500"
-              }`}
-            />
-            <div>
-              <p className="text-sm font-bold text-slate-900">
-                {hasSupabase
-                  ? "Đã nạp biến môi trường Supabase"
-                  : "Chưa nạp biến môi trường trong .env.local"}
-              </p>
-              <p className="text-xs text-slate-500">
-                {hasSupabase
-                  ? "Hệ thống sẵn sàng đồng bộ và tải ảnh lên Supabase Storage"
-                  : "Đang sử dụng dữ liệu tĩnh mẫu và bộ nhớ trình duyệt"}
-              </p>
-            </div>
+      {/* Highlights / Advantages */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-emerald-50/60 border border-emerald-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 font-bold text-sm text-emerald-900 mb-1">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            100% Miễn Phí Trọn Đời
           </div>
+          <p className="text-xs text-emerald-700 leading-relaxed">
+            Không tốn bất kỳ chi phí nào cho dịch vụ cloud bên ngoài. Không cần thẻ visa và không bao giờ lo hết hạn gói dịch vụ.
+          </p>
+        </div>
 
-          <div className="flex gap-2 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={handleTestConnection}
-              disabled={isTesting}
-              className="px-3 py-1.5 bg-[#0F1E36] hover:bg-[#162a4d] text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? "animate-spin" : ""}`} />
-              Kiểm tra kết nối
-            </button>
+        <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 font-bold text-sm text-blue-900 mb-1">
+            <ShieldCheck className="w-4 h-4 text-blue-600" />
+            Không Bị Ngủ (No Sleep)
+          </div>
+          <p className="text-xs text-blue-700 leading-relaxed">
+            Khác với gói free của Supabase (tự động ngủ sau 7 ngày không ai truy cập), SQLite nằm trực tiếp trên host và luôn luôn hoạt động 24/7.
+          </p>
+        </div>
 
-            {hasSupabase && (
-              <button
-                type="button"
-                onClick={handleSeed}
-                disabled={isSeeding}
-                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                <FileCheck2 className={`w-3.5 h-3.5 ${isSeeding ? "animate-spin" : ""}`} />
-                Nạp dữ liệu mẫu
-              </button>
-            )}
+        <div className="bg-purple-50/60 border border-purple-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 font-bold text-sm text-purple-900 mb-1">
+            <DownloadCloud className="w-4 h-4 text-purple-600" />
+            Tái Sử Dụng Không Giới Hạn
+          </div>
+          <p className="text-xs text-purple-700 leading-relaxed">
+            Bạn có thể đóng gói toàn bộ bộ mã nguồn này và bàn giao cho bao nhiêu khách hàng khác tùy thích mà không sợ bị giới hạn quota dự án.
+          </p>
+        </div>
+      </div>
+
+      {/* System Status Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+          <div>
+            <h2 className="font-serif text-lg font-bold text-slate-900">
+              Trạng Thái Tài Nguyên Trên Máy Chủ
+            </h2>
+            <p className="text-xs text-slate-500">
+              Kiểm tra tình trạng tệp cơ sở dữ liệu và thư mục tải ảnh
+            </p>
           </div>
         </div>
 
-        {testResult && (
-          <div className="mt-3 p-3 bg-slate-100 rounded-lg text-xs font-medium text-slate-800">
-            {testResult}
+        <div className="p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-[11px] font-semibold text-slate-500 block uppercase tracking-wider">
+                Cơ sở dữ liệu
+              </span>
+              <span className="text-sm font-bold text-slate-800 block mt-1">
+                SQLite 3 (PDO)
+              </span>
+              <span className="text-xs text-slate-400 block mt-0.5 font-mono truncate">
+                {systemInfo.database || "api/database.sqlite"}
+              </span>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-[11px] font-semibold text-slate-500 block uppercase tracking-wider">
+                Thư mục tải ảnh
+              </span>
+              <span className="text-sm font-bold text-slate-800 block mt-1">
+                public_html/uploads/
+              </span>
+              <span className="text-xs text-emerald-600 font-medium block mt-0.5">
+                {systemInfo.uploads_writable !== false ? "Quyền ghi hợp lệ (755)" : "Cần cấp quyền 755"}
+              </span>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-[11px] font-semibold text-slate-500 block uppercase tracking-wider">
+                Bài viết hiện có
+              </span>
+              <span className="text-sm font-bold text-slate-800 block mt-1">
+                {systemInfo.articles_count !== undefined ? `${systemInfo.articles_count} bài` : "50 bài mẫu"}
+              </span>
+              <span className="text-xs text-slate-400 block mt-0.5">
+                Đầy đủ slug, ảnh &amp; danh mục
+              </span>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+              <span className="text-[11px] font-semibold text-slate-500 block uppercase tracking-wider">
+                Đội ngũ thành viên
+              </span>
+              <span className="text-sm font-bold text-slate-800 block mt-1">
+                {systemInfo.team_count !== undefined ? `${systemInfo.team_count} nhân sự` : "6 nhân sự"}
+              </span>
+              <span className="text-xs text-slate-400 block mt-0.5">
+                Luật sư sáng lập &amp; cộng sự
+              </span>
+            </div>
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* 1-Click Restore / Seed Database */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="font-serif text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Database className="w-5 h-5 text-[#96794F]" />
+              Khởi Tạo / Khôi Phục Dữ Liệu Gốc (1-Click)
+            </h2>
+            <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
+              Nếu bạn vừa triển khai web lên hosting mới hoặc lỡ xóa nhầm bài viết, hãy bấm nút bên cạnh để hệ thống tự động nạp lại toàn bộ 50 bài viết tư vấn pháp luật chuẩn xác và 6 luật sư thành viên.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSeed}
+            disabled={isSeeding}
+            className="px-5 py-2.5 bg-gradient-to-r from-[#DFBA73] via-[#C5A059] to-[#96794F] hover:brightness-110 active:scale-95 text-[#14130F] font-bold text-xs uppercase tracking-wider rounded-lg shadow transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2 shrink-0"
+          >
+            <RefreshCw className={`w-4 h-4 ${isSeeding ? "animate-spin" : ""}`} />
+            {isSeeding ? "Đang xử lý..." : "Khởi tạo dữ liệu gốc ngay"}
+          </button>
+        </div>
 
         {seedStatus && (
-          <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-medium text-emerald-800">
+          <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800">
             {seedStatus}
           </div>
         )}
       </div>
 
-      {/* Step by step guide */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
-        <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <KeyRound className="w-5 h-5 text-[#96794F]" />
-          3 Bước Kết Nối Supabase Miễn Phí (Mất 2 Phút)
+      {/* Backup Guide */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <h2 className="font-serif text-lg font-bold text-slate-900 flex items-center gap-2 mb-2">
+          <FolderArchive className="w-5 h-5 text-[#96794F]" />
+          Hướng Dẫn Sao Lưu (Backup) &amp; Phục Hồi Dữ Liệu Siêu Nhanh
         </h2>
+        <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+          Khác với các hệ thống phức tạp dùng MySQL hay PostgreSQL phải xuất tệp SQL lằng nhằng, toàn bộ dữ liệu của bạn nằm gọn trong đúng 1 tệp và 1 thư mục trên DirectAdmin Hosting:
+        </p>
 
-        {/* Step 1 */}
-        <div className="flex gap-4">
-          <div className="w-8 h-8 rounded-full bg-[#96794F]/10 text-[#96794F] font-bold text-sm flex items-center justify-center shrink-0">
-            1
+        <div className="space-y-3">
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-[#0F1E36] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              1
+            </span>
+            <div className="text-xs text-slate-700 leading-relaxed">
+              <strong>Tệp Cơ Sở Dữ Liệu:</strong> <code>public_html/api/database.sqlite</code>
+              <p className="text-slate-500 mt-0.5">
+                Chứa toàn bộ bài viết, nội dung bài viết, danh mục, tài khoản admin và danh sách luật sư. Chỉ cần tải tệp này về máy tính là bạn đã sao lưu 100% dữ liệu văn bản.
+              </p>
+            </div>
           </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Tạo Project mới trên Supabase
-            </h3>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Truy cập{" "}
-              <a
-                href="https://supabase.com"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[#96794F] font-bold underline inline-flex items-center gap-1"
-              >
-                supabase.com <ExternalLink className="w-3 h-3" />
-              </a>{" "}
-              (đăng nhập bằng tài khoản Github hoặc Google), bấm <strong>&quot;New project&quot;</strong>, đặt tên (ví dụ: <code>luat-hai-minh-quan</code>), chọn khu vực Singapore (gần Việt Nam nhất).
-            </p>
-          </div>
-        </div>
 
-        {/* Step 2 */}
-        <div className="flex gap-4">
-          <div className="w-8 h-8 rounded-full bg-[#96794F]/10 text-[#96794F] font-bold text-sm flex items-center justify-center shrink-0">
-            2
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Lấy API URL và Anon Key dán vào file <code>.env.local</code>
-            </h3>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Trong dashboard Supabase, vào mục <strong>Project Settings -&gt; API</strong> (hoặc Data API), copy:
-            </p>
-            <div className="mt-2 p-3 bg-slate-900 text-slate-200 rounded-lg text-xs font-mono">
-              <div>NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co</div>
-              <div>NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJh......</div>
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-start gap-3">
+            <span className="w-6 h-6 rounded-full bg-[#0F1E36] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              2
+            </span>
+            <div className="text-xs text-slate-700 leading-relaxed">
+              <strong>Thư Mục Hình Ảnh:</strong> <code>public_html/uploads/</code>
+              <p className="text-slate-500 mt-0.5">
+                Chứa tất cả ảnh bài viết và ảnh đại diện luật sư mà bạn tải lên qua trang quản trị. Để sao lưu ảnh, chỉ cần nén (zip) thư mục này lại và tải về.
+              </p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Step 3 */}
-        <div className="flex gap-4">
-          <div className="w-8 h-8 rounded-full bg-[#96794F]/10 text-[#96794F] font-bold text-sm flex items-center justify-center shrink-0">
-            3
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-slate-900">
-              Chạy mã SQL khởi tạo Bảng &amp; Bucket Storage
-            </h3>
-            <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-              Vào mục <strong>SQL Editor</strong> trên Supabase, bấm <strong>New Query</strong>, dán toàn bộ đoạn mã bên dưới và bấm nút <strong>Run</strong>:
-            </p>
-
-            <div className="mt-3 relative">
-              <button
-                type="button"
-                onClick={copySql}
-                className="absolute top-3 right-3 px-3 py-1.5 bg-[#96794F] hover:bg-[#7d633e] text-white text-xs font-bold rounded flex items-center gap-1.5 transition-colors shadow"
-              >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? "Đã sao chép!" : "Sao chép mã SQL"}
-              </button>
-
-              <pre className="p-4 pt-12 bg-slate-900 text-slate-200 rounded-lg text-xs font-mono overflow-x-auto max-h-80 leading-relaxed">
-                {sqlScript}
-              </pre>
-            </div>
-          </div>
+      {/* Security & Password Changing */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <h2 className="font-serif text-lg font-bold text-slate-900 flex items-center gap-2 mb-2">
+          <KeyRound className="w-5 h-5 text-[#96794F]" />
+          Đổi Mật Khẩu Quản Trị Viên
+        </h2>
+        <p className="text-xs text-slate-500 mb-3 leading-relaxed">
+          Tài khoản quản trị mặc định:
+        </p>
+        <div className="p-3 bg-slate-900 text-slate-100 rounded-lg font-mono text-xs space-y-1 mb-4">
+          <div>Tài khoản : <span className="text-[#E5B869]">admin</span></div>
+          <div>Mật khẩu  : <span className="text-[#E5B869]">admin@123</span></div>
+        </div>
+        <p className="text-xs text-slate-600 leading-relaxed">
+          Để đổi mật khẩu, bạn chỉ cần mở file <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">public/api/index.php</code> (hoặc trực tiếp trong trình File Manager của DirectAdmin tại <code className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-800 font-mono">public_html/api/index.php</code>), tìm dòng:
+        </p>
+        <div className="mt-2 p-3 bg-slate-100 border border-slate-200 rounded font-mono text-xs text-slate-800">
+          $ADMIN_PASS = &apos;admin@123&apos;; // Thay đổi mật khẩu mới của bạn ở đây
         </div>
       </div>
     </div>

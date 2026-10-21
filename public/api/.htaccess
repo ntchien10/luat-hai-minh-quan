@@ -1,0 +1,15 @@
+# ==============================================================================
+# BẢO VỆ AN TOÀN CHO CƠ SỞ DỮ LIỆU SQLITE & FILE CẤU HÌNH NỘI BỘ
+# ==============================================================================
+
+# Chặn tải trực tiếp file database.sqlite và file json
+<FilesMatch "\.(sqlite|sqlite3|db|json)$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Cho phép thực thi index.php
+<Files "index.php">
+    Order Allow,Deny
+    Allow from all
+</Files>

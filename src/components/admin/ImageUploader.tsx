@@ -3,7 +3,7 @@
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { UploadCloud, X, Loader2, Link as LinkIcon, CheckCircle2 } from "lucide-react";
-import { uploadImageToSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { uploadImageToHost } from "@/lib/api";
 
 interface ImageUploaderProps {
   value: string;
@@ -18,7 +18,7 @@ export function ImageUploader({
   onChange,
   folder = "articles",
   label = "Hình ảnh đại diện",
-  description = "Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB",
+  description = "Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB (Lưu trực tiếp trên Hosting)",
 }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -43,30 +43,12 @@ export function ImageUploader({
     setIsUploading(true);
     setUploadError(null);
 
-    // Kiểm tra Supabase
-    if (!isSupabaseConfigured()) {
-      // Nếu chưa cấu hình Supabase, hỗ trợ fallback đọc ảnh dạng Base64 Data URL để người dùng vẫn preview và lưu được ngay!
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          onChange(reader.result);
-          setIsUploading(false);
-        }
-      };
-      reader.onerror = () => {
-        setUploadError("Không thể đọc file trên trình duyệt");
-        setIsUploading(false);
-      };
-      reader.readAsDataURL(file);
-      return;
-    }
-
-    // Upload lên Supabase Storage
-    const result = await uploadImageToSupabase(file, folder);
+    // Upload trực tiếp lên hosting (/uploads/)
+    const result = await uploadImageToHost(file, folder);
     setIsUploading(false);
 
     if (result.error || !result.url) {
-      setUploadError(result.error || "Lỗi khi upload ảnh lên Supabase");
+      setUploadError(result.error || "Lỗi khi upload ảnh lên hosting");
     } else {
       onChange(result.url);
     }
