@@ -169,18 +169,20 @@ switch ($action) {
         $user = $stmt->fetch();
 
         $isValid = false;
-        if ($user && $user['password'] === $password) {
-            $isValid = true;
-        } elseif ($username === 'admin' && ($password === 'admin@123' || $password === '123456')) {
-            $isValid = true;
-            if (!$user) {
-                $user = [
-                    'id' => 'user-admin-1',
-                    'username' => 'admin',
-                    'name' => 'Quản Trị Viên Trưởng',
-                    'role' => 'admin'
-                ];
+        if ($user) {
+            // Kiểm tra mật khẩu khớp chính xác với bản ghi trong SQLite
+            if ($user['password'] === $password) {
+                $isValid = true;
             }
+        } elseif ($username === 'admin' && $password === 'admin@123') {
+            // Chỉ dự phòng mật khẩu gốc ban đầu nếu bảng admin_users chưa có bản ghi
+            $isValid = true;
+            $user = [
+                'id' => 'user-admin-1',
+                'username' => 'admin',
+                'name' => 'Quản Trị Viên Trưởng',
+                'role' => 'admin'
+            ];
         }
 
         if ($isValid && $user) {

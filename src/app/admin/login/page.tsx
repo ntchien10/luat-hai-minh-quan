@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Scale, Lock, User, ArrowRight, ShieldCheck, AlertCircle, Loader2, Server } from "lucide-react";
+import { Scale, Lock, User, ArrowRight, AlertCircle, Loader2, Server } from "lucide-react";
 import { loginAdmin } from "@/lib/api";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin@123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -39,14 +39,10 @@ export default function AdminLoginPage() {
     }
   };
 
-  const handleQuickDemoLogin = () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("hmq_admin_session", "admin");
-      localStorage.setItem("hmq_admin_role", "admin");
-      localStorage.setItem("hmq_admin_name", "Quản Trị Viên Trưởng");
-      localStorage.setItem("hmq_admin_token", "local-demo-token");
-    }
-    router.push("/admin/");
+  const fillAccount = (u: string, p: string) => {
+    setUsername(u);
+    setPassword(p);
+    setErrorMsg(null);
   };
 
   return (
@@ -148,16 +144,27 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Quick Demo Access Button */}
-        <div className="mt-4 pt-4 border-t border-slate-700/60 text-center">
-          <button
-            type="button"
-            onClick={handleQuickDemoLogin}
-            className="text-xs text-[#E5B869] hover:text-white font-medium inline-flex items-center gap-1.5 py-1 px-3 rounded hover:bg-white/5 transition-colors"
-          >
-            <ShieldCheck className="w-4 h-4 text-[#96794F]" />
-            Vào thẳng trang quản trị (1-Click)
-          </button>
+        {/* Fast Fill Demo Credentials (vẫn phải bấm Đăng Nhập để xác thực) */}
+        <div className="mt-5 pt-4 border-t border-slate-700/60">
+          <p className="text-[11px] text-slate-400 text-center mb-2 font-medium">
+            Tài khoản mẫu (bấm để điền nhanh & xác thực):
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => fillAccount("admin", "admin@123")}
+              className="py-1.5 px-2 bg-slate-800/80 hover:bg-[#96794F]/20 border border-slate-700 hover:border-[#96794F]/50 rounded text-[11px] text-[#DFBA73] font-medium transition-colors text-center"
+            >
+              👑 Admin: <span className="font-mono text-slate-300">admin</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => fillAccount("bientapvien", "editor@123")}
+              className="py-1.5 px-2 bg-slate-800/80 hover:bg-[#96794F]/20 border border-slate-700 hover:border-[#96794F]/50 rounded text-[11px] text-slate-300 font-medium transition-colors text-center"
+            >
+              ✍️ Editor: <span className="font-mono text-slate-400">bientapvien</span>
+            </button>
+          </div>
         </div>
 
         {/* Return to public site */}

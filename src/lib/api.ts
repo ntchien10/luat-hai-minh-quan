@@ -400,38 +400,62 @@ export async function loginAdmin(
   error?: string;
   user?: { id?: string; username: string; name?: string; role?: "admin" | "editor" | string; email?: string };
 }> {
+  const cleanUsername = username.trim().toLowerCase();
+  const cleanPassword = password.trim();
+
+  if (!cleanUsername || !cleanPassword) {
+    return { success: false, error: "Vui lòng nhập tên đăng nhập và mật khẩu." };
+  }
+
   try {
     const res = await fetch(`${getApiBase()}/?action=login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username: cleanUsername, password: cleanPassword }),
     });
     if (res.ok) {
       const data = await res.json();
       return data;
     }
   } catch (e) {
-    console.warn("Login API offline, testing demo credentials...", e);
+    console.warn("Login API offline, validating with local accounts...", e);
   }
 
-  // Chấp nhận mật khẩu mặc định hoặc demo khi test local
-  if (password === "admin@123" || password === "123456" || password.length >= 4) {
-    const role = username.toLowerCase() === "admin" ? "admin" : "editor";
-    const name = role === "admin" ? "Quản Trị Viên Trưởng" : "Biên Tập Viên Tin Tức";
+  // Khi test local trên máy tính (chưa deploy lên hosting PHP):
+  // Mặc định tài khoản:
+  // admin -> admin@123
+  // bientapvien -> editor@123
+  let validAccounts: Record<string, { password: string; name: string; role: "admin" | "editor" }> = {
+    admin: { password: "admin@123", name: "Quản Trị Viên Trưởng", role: "admin" },
+    bientapvien: { password: "editor@123", name: "Biên Tập Viên Tin Tức", role: "editor" },
+  };
+
+  if (typeof window !== "undefined") {
+    const saved = localStorage.getItem("hmq_admin_credentials");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        validAccounts = { ...validAccounts, ...parsed };
+      } catch {}
+    }
+  }
+
+  const account = validAccounts[cleanUsername];
+  if (account && account.password === cleanPassword) {
     return {
       success: true,
-      token: "local-demo-token",
+      token: "session-" + Date.now(),
       user: {
-        id: `user-${username}`,
-        username,
-        name,
-        role,
+        id: `user-${cleanUsername}`,
+        username: cleanUsername,
+        name: account.name,
+        role: account.role,
         email: "luathaiminhquan@gmail.com",
       },
     };
   }
 
-  return { success: false, error: "Mật khẩu không chính xác" };
+  return { success: false, error: "Tên đăng nhập hoặc mật khẩu không chính xác." };
 }
 
 /**
@@ -596,6 +620,25 @@ export async function saveAdminUser(
         created_at: new Date().toISOString()
       }];
     }
+    if (user.password && user.username) {
+      const savedCreds = localStorage.getItem("hmq_admin_credentials");
+      let creds: Record<string, { password: string; name: string; role: "admin" | "editor" }> = {
+        admin: { password: "admin@123", name: "Quản Trị Viên Trưởng", role: "admin" },
+        bientapvien: { password: "editor@123", name: "Biên Tập Viên Tin Tức", role: "editor" },
+      };
+      if (savedCreds) {
+        try {
+          creds = { ...creds, ...JSON.parse(savedCreds) };
+        } catch {}
+      }
+      creds[user.username.toLowerCase()] = {
+        password: user.password,
+        name: user.name || user.username,
+        role: user.role || "editor",
+      };
+      localStorage.setItem("hmq_admin_credentials", JSON.stringify(creds));
+    }
+
     localStorage.setItem("hmq_admin_users", JSON.stringify(updated));
     return { success: true, message: "Lưu tài khoản thành công" };
   }
@@ -637,6 +680,18 @@ export async function deleteAdminUser(
       }
       const updated = current.filter((u) => u.id !== id);
       localStorage.setItem("hmq_admin_users", JSON.stringify(updated));
+
+      if (target?.username) {
+        const savedCreds = localStorage.getItem("hmq_admin_credentials");
+        if (savedCreds) {
+          try {
+            const creds = JSON.parse(savedCreds);
+            delete creds[target.username.toLowerCase()];
+            localStorage.setItem("hmq_admin_credentials", JSON.stringify(creds));
+          } catch {}
+        }
+      }
+
       return { success: true, message: "Đã xóa tài khoản" };
     }
   }
@@ -653,26 +708,67 @@ export async function changeAdminPassword(params: {
   newPassword: string;
   requesterUsername?: string;
 }): Promise<{ success: boolean; message?: string; error?: string }> {
+  const cleanUsername = params.username.trim().toLowerCase();
+  const cleanNewPassword = params.newPassword.trim();
+  const cleanOldPassword = params.oldPassword ? params.oldPassword.trim() : "";
+  const requester = (params.requesterUsername || params.username).trim().toLowerCase();
+
   try {
     const res = await fetch(`${getApiBase()}/?action=change_password`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username: params.username,
-        old_password: params.oldPassword,
-        new_password: params.newPassword,
-        requester_username: params.requesterUsername || params.username,
+        username: cleanUsername,
+        old_password: cleanOldPassword,
+        new_password: cleanNewPassword,
+        requester_username: requester,
       }),
     });
     if (res.ok) {
-      return await res.json();
+      const data = await res.json();
+      if (!data.success) {
+        return data;
+      }
     }
   } catch (e) {
-    console.warn("changeAdminPassword failed...", e);
+    console.warn("changeAdminPassword API offline...", e);
   }
 
-  if (!params.newPassword || params.newPassword.length < 4) {
-    return { success: false, error: "Mật khẩu mới phải có tối thiểu 4 ký tự" };
+  // Cập nhật vào localStorage khi test local
+  if (typeof window !== "undefined") {
+    const savedCreds = localStorage.getItem("hmq_admin_credentials");
+    let creds: Record<string, { password: string; name: string; role: "admin" | "editor" }> = {
+      admin: { password: "admin@123", name: "Quản Trị Viên Trưởng", role: "admin" },
+      bientapvien: { password: "editor@123", name: "Biên Tập Viên Tin Tức", role: "editor" },
+    };
+    if (savedCreds) {
+      try {
+        creds = { ...creds, ...JSON.parse(savedCreds) };
+      } catch {}
+    }
+
+    const currentAcc = creds[cleanUsername];
+    // Nếu người dùng tự đổi mật khẩu của mình: bắt buộc kiểm tra mật khẩu cũ
+    const isSelf = requester === cleanUsername;
+    if (isSelf) {
+      const expectedOld = currentAcc ? currentAcc.password : "admin@123";
+      if (cleanOldPassword !== expectedOld) {
+        return { success: false, error: "Mật khẩu hiện tại không chính xác" };
+      }
+    }
+
+    if (currentAcc) {
+      currentAcc.password = cleanNewPassword;
+      creds[cleanUsername] = currentAcc;
+    } else {
+      creds[cleanUsername] = {
+        password: cleanNewPassword,
+        name: cleanUsername === "admin" ? "Quản Trị Viên Trưởng" : cleanUsername,
+        role: cleanUsername === "admin" ? "admin" : "editor",
+      };
+    }
+    localStorage.setItem("hmq_admin_credentials", JSON.stringify(creds));
+    return { success: true, message: "Đổi mật khẩu thành công" };
   }
 
   return { success: true, message: "Đổi mật khẩu thành công" };

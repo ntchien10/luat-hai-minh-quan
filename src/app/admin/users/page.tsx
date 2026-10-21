@@ -70,13 +70,13 @@ export default function UsersAdminPage() {
   const [seedResult, setSeedResult] = useState<string | null>(null);
   const [systemInfo, setSystemInfo] = useState<{ database?: string; uploads_writable?: boolean }>({});
 
-  const isAdmin = currentRole === "admin" || currentUser === "admin";
+  const isAdmin = currentRole === "admin";
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
     if (typeof window !== "undefined") {
-      const session = localStorage.getItem("hmq_admin_session") || "admin";
-      const role = localStorage.getItem("hmq_admin_role") || (session === "admin" ? "admin" : "editor");
+      const session = localStorage.getItem("hmq_admin_session") || "";
+      const role = localStorage.getItem("hmq_admin_role") || "editor";
       setCurrentUser(session);
       setCurrentRole(role);
     }
