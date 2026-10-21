@@ -11,6 +11,8 @@ import {
   X,
   Phone,
   LogIn,
+  MapPin,
+  Mail,
 } from "lucide-react";
 import {
   allNavigationServices,
@@ -19,6 +21,93 @@ import {
   teamMembersList,
 } from "@/data/mockData";
 import { formatAmpersand } from "@/components/ui/Ampersand";
+
+declare global {
+  interface Window {
+    google?: any;
+    googleTranslateElementInit?: () => void;
+  }
+}
+
+// 4 Cờ ngôn ngữ dạng SVG sắc nét chuẩn quốc tế
+function FlagUK() {
+  return (
+    <svg viewBox="0 0 60 30" className="w-full h-full object-cover block">
+      <clipPath id="uk-clip">
+        <path d="M0,0 v30 h60 v-30 z" />
+      </clipPath>
+      <clipPath id="uk-t">
+        <path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z" />
+      </clipPath>
+      <g clipPath="url(#uk-clip)">
+        <path d="M0,0 v30 h60 v-30 z" fill="#012169" />
+        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+        <path d="M0,0 L60,30 M60,0 L0,30" clipPath="url(#uk-t)" stroke="#C8102E" strokeWidth="4" />
+        <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
+        <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
+      </g>
+    </svg>
+  );
+}
+
+function FlagJapan() {
+  return (
+    <svg viewBox="0 0 60 40" className="w-full h-full object-cover block">
+      <rect width="60" height="40" fill="#ffffff" />
+      <circle cx="30" cy="20" r="12" fill="#bc002d" />
+    </svg>
+  );
+}
+
+function FlagKorea() {
+  return (
+    <svg viewBox="0 0 60 40" className="w-full h-full object-cover block">
+      <rect width="60" height="40" fill="#ffffff" />
+      <g transform="translate(30 20)">
+        <path d="M0,-11 A11,11 0 0,1 0,11 A5.5,5.5 0 0,0 0,0 A5.5,5.5 0 0,1 0,-11" fill="#cd2e3a" />
+        <path d="M0,11 A11,11 0 0,1 0,-11 A5.5,5.5 0 0,0 0,0 A5.5,5.5 0 0,1 0,11" fill="#0047a0" />
+      </g>
+      <g transform="translate(13 10) rotate(33)">
+        <rect x="-6" y="-3.5" width="12" height="1.5" fill="#000" />
+        <rect x="-6" y="-0.5" width="12" height="1.5" fill="#000" />
+        <rect x="-6" y="2.5" width="12" height="1.5" fill="#000" />
+      </g>
+      <g transform="translate(47 30) rotate(33)">
+        <rect x="-6" y="-3.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="0.8" y="-3.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="-6" y="-0.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="0.8" y="-0.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="-6" y="2.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="0.8" y="2.5" width="5.2" height="1.5" fill="#000" />
+      </g>
+      <g transform="translate(47 10) rotate(-33)">
+        <rect x="-6" y="-3.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="0.8" y="-3.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="-6" y="-0.5" width="12" height="1.5" fill="#000" />
+        <rect x="-6" y="2.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="0.8" y="2.5" width="5.2" height="1.5" fill="#000" />
+      </g>
+      <g transform="translate(13 30) rotate(-33)">
+        <rect x="-6" y="-3.5" width="12" height="1.5" fill="#000" />
+        <rect x="-6" y="-0.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="0.8" y="-0.5" width="5.2" height="1.5" fill="#000" />
+        <rect x="-6" y="2.5" width="12" height="1.5" fill="#000" />
+      </g>
+    </svg>
+  );
+}
+
+function FlagVietnam() {
+  return (
+    <svg viewBox="0 0 60 40" className="w-full h-full object-cover block">
+      <rect width="60" height="40" fill="#da251d" />
+      <polygon
+        points="30,8 33.7,19.4 45.7,19.4 36,26.4 39.7,37.8 30,30.8 20.3,37.8 24,26.4 14.3,19.4 26.3,19.4"
+        fill="#ffff00"
+      />
+    </svg>
+  );
+}
 
 export const Header: React.FC = () => {
   const pathname = usePathname() || "";
@@ -107,6 +196,80 @@ export const Header: React.FC = () => {
     };
   }, []);
 
+  const [currentLang, setCurrentLang] = useState<"vi" | "en" | "ja" | "ko">("vi");
+
+  useEffect(() => {
+    // 1. Kiểm tra ngôn ngữ hiện tại từ cookie hoặc storage
+    if (typeof document !== "undefined") {
+      const cookies = document.cookie.split(";");
+      const transCookie = cookies.find((c) => c.trim().startsWith("googtrans="));
+      if (transCookie) {
+        const val = transCookie.split("=")[1]?.trim();
+        if (val?.endsWith("/en")) setCurrentLang("en");
+        else if (val?.endsWith("/ja")) setCurrentLang("ja");
+        else if (val?.endsWith("/ko")) setCurrentLang("ko");
+        else setCurrentLang("vi");
+      } else {
+        const saved = localStorage.getItem("selected_lang") as "vi" | "en" | "ja" | "ko";
+        if (saved) setCurrentLang(saved);
+      }
+    }
+
+    // 2. Tải Google Translate script
+    if (typeof window !== "undefined" && !document.getElementById("google-translate-script")) {
+      window.googleTranslateElementInit = () => {
+        if (window.google?.translate) {
+          new window.google.translate.TranslateElement(
+            {
+              pageLanguage: "vi",
+              includedLanguages: "en,ja,ko,vi",
+              autoDisplay: false,
+            },
+            "google_translate_element"
+          );
+        }
+      };
+
+      const script = document.createElement("script");
+      script.id = "google-translate-script";
+      script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
+  const handleSelectLanguage = (langCode: "vi" | "en" | "ja" | "ko") => {
+    setCurrentLang(langCode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selected_lang", langCode);
+      const hostname = window.location.hostname;
+
+      if (langCode === "vi") {
+        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=.${hostname}; path=/;`;
+        const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+        if (select) {
+          select.value = "vi";
+          select.dispatchEvent(new Event("change"));
+        } else {
+          window.location.reload();
+        }
+        return;
+      }
+
+      document.cookie = `googtrans=/vi/${langCode}; path=/;`;
+      document.cookie = `googtrans=/vi/${langCode}; domain=.${hostname}; path=/;`;
+
+      const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+      if (select) {
+        select.value = langCode;
+        select.dispatchEvent(new Event("change"));
+      } else {
+        window.location.reload();
+      }
+    }
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsSticky(window.scrollY > 30);
@@ -119,12 +282,129 @@ export const Header: React.FC = () => {
     <header
       id="masthead"
       className={`w-full bg-white z-50 transition-all duration-300 ${isSticky
-          ? "fixed top-0 left-0 shadow-[0_2px_29px_rgba(34,34,34,0.14)] py-2.5"
-          : "relative py-4 border-b border-slate-100"
+          ? "fixed top-0 left-0 shadow-[0_2px_29px_rgba(34,34,34,0.14)]"
+          : "relative border-b border-slate-100"
         }`}
     >
-      <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between">
+      {/* Container ẩn của Google Translate */}
+      <div id="google_translate_element" style={{ display: "none" }} />
+
+      {/* TOPBAR (Thanh thông tin đầu trang - Dark Forest Green chuẩn thương hiệu Luật Á Châu & Hải Minh Quân) */}
+      <div className="bg-[#0E3A24] text-white text-xs font-medium py-2 border-b border-white/10">
+        <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Bên trái: Địa chỉ | Email | Hotline */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-slate-200 text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
+            {/* Địa chỉ */}
+            <div className="flex items-center gap-1.5 truncate">
+              <MapPin className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
+              <span className="truncate" title={firmInfo.headquarters}>
+                {firmInfo.addressShort}
+              </span>
+            </div>
+
+            <span className="text-white/25 select-none hidden md:inline">|</span>
+
+            {/* Email */}
+            <a
+              href={`mailto:${firmInfo.email}`}
+              className="hidden md:flex items-center gap-1.5 shrink-0 hover:text-[#DFBA73] transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
+              <span>{firmInfo.email}</span>
+            </a>
+
+            <span className="text-white/25 select-none hidden sm:inline">|</span>
+
+            {/* Hotline */}
+            <a
+              href={`tel:${firmInfo.hotlineRaw}`}
+              className="hidden sm:flex items-center gap-1.5 shrink-0 font-bold text-white hover:text-[#DFBA73] transition-colors"
+            >
+              <Phone className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
+              <span>{firmInfo.phone}</span>
+            </a>
+          </div>
+
+          {/* Bên phải: Nút tìm kiếm & 4 Cờ ngôn ngữ */}
+          <div className="flex items-center gap-3 shrink-0 ml-3">
+            {/* Nút Tìm kiếm */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="text-slate-200 hover:text-[#DFBA73] transition-colors p-1 cursor-pointer"
+              title="Tìm kiếm thông tin"
+            >
+              <Search className="w-3.5 h-3.5" />
+            </button>
+
+            <span className="text-white/20 select-none">|</span>
+
+            {/* 4 Cờ Ngôn Ngữ */}
+            <div className="flex items-center gap-1.5">
+              {/* Tiếng Anh */}
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("en")}
+                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                  currentLang === "en"
+                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
+                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                }`}
+                title="English (Tiếng Anh)"
+              >
+                <FlagUK />
+              </button>
+
+              {/* Tiếng Nhật */}
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("ja")}
+                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                  currentLang === "ja"
+                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
+                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                }`}
+                title="日本語 (Tiếng Nhật)"
+              >
+                <FlagJapan />
+              </button>
+
+              {/* Tiếng Hàn */}
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("ko")}
+                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                  currentLang === "ko"
+                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
+                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                }`}
+                title="한국어 (Tiếng Hàn)"
+              >
+                <FlagKorea />
+              </button>
+
+              {/* Tiếng Việt */}
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("vi")}
+                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                  currentLang === "vi"
+                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
+                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                }`}
+                title="Tiếng Việt"
+              >
+                <FlagVietnam />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navbar Wrapper */}
+      <div className={`transition-all duration-300 ${isSticky ? "py-2.5" : "py-3.5 sm:py-4"}`}>
+        <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
           {/* Official Logo Brand (Bấm vào sẽ tải lại trang) */}
           <Link
             href="/"
@@ -517,11 +797,50 @@ export const Header: React.FC = () => {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white border-t border-slate-200 px-6 py-4 space-y-2 shadow-xl max-h-[calc(100vh-80px)] overflow-y-auto">
+          {/* Ngôn ngữ trên mobile */}
+          <div className="pb-3 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-700">Ngôn ngữ / Language:</span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("en")}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "en" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                title="English"
+              >
+                <FlagUK />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("ja")}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "ja" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                title="日本語"
+              >
+                <FlagJapan />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("ko")}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "ko" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                title="한국어"
+              >
+                <FlagKorea />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectLanguage("vi")}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "vi" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                title="Tiếng Việt"
+              >
+                <FlagVietnam />
+              </button>
+            </div>
+          </div>
           <Link
             href="/"
             onClick={() => setMobileMenuOpen(false)}
