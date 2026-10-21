@@ -53,7 +53,11 @@ export const ContactFormBlock: React.FC = () => {
             Gửi yêu cầu thành công!
           </h3>
           <p className="text-sm text-slate-600 leading-relaxed">
-            Cảm ơn Quý khách. Đội ngũ Luật sư của Hải Minh Quân sẽ liên hệ lại trực tiếp qua số điện thoại <strong>{formData.phone}</strong> trong thời gian sớm nhất.
+            Cảm ơn Quý khách. Đội ngũ Luật sư của{" "}
+            <span translate="no" className="notranslate">
+              Hải Minh Quân
+            </span>{" "}
+            sẽ liên hệ lại trực tiếp qua số điện thoại <strong>{formData.phone}</strong> trong thời gian sớm nhất.
           </p>
           <button
             onClick={() => setSubmitted(false)}

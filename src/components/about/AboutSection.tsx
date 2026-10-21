@@ -40,7 +40,13 @@ export const AboutSection: React.FC = () => {
 
             {/* Đoạn 1: Giới thiệu thương hiệu và sứ mệnh */}
             <p className="text-slate-700 text-[14px] sm:text-[15px] leading-relaxed text-justify">
-              <strong>Công ty Luật TNHH Hải Minh Quân</strong> là tổ chức hành nghề luật sư uy tín tại Hà Nội và toàn quốc, 
+              <strong>
+                Công ty Luật TNHH{" "}
+                <span translate="no" className="notranslate">
+                  Hải Minh Quân
+                </span>
+              </strong>{" "}
+              là tổ chức hành nghề luật sư uy tín tại Hà Nội và toàn quốc, 
               quy tụ đội ngũ luật sư, chuyên gia pháp lý giàu kinh nghiệm và tận tâm với nghề. Chúng tôi đồng hành cùng cá nhân và doanh 
               nghiệp trong việc phòng ngừa rủi ro, tháo gỡ các vướng mắc pháp lý phức tạp và bảo vệ tối đa quyền, lợi ích hợp pháp 
               của thân chủ theo đúng quy định pháp luật.
@@ -48,7 +54,11 @@ export const AboutSection: React.FC = () => {
 
             {/* Đoạn 2: Năng lực chuyên môn thực chiến & cam kết */}
             <p className="text-slate-700 text-[14px] sm:text-[15px] leading-relaxed text-justify">
-              Với phương châm <em>&ldquo;Tận tâm – Bản lĩnh – Bảo mật tuyệt đối&rdquo;</em>, Hải Minh Quân khẳng định thế mạnh vượt trội 
+              Với phương châm <em>&ldquo;Tận tâm – Bản lĩnh – Bảo mật tuyệt đối&rdquo;</em>,{" "}
+              <span translate="no" className="notranslate">
+                Hải Minh Quân
+              </span>{" "}
+              khẳng định thế mạnh vượt trội 
               trong các lĩnh vực: <strong>Tố tụng Dân sự, Hình sự, Hành chính</strong>, <strong>Tư vấn Đầu tư</strong>, 
               <strong>Sở hữu trí tuệ</strong>, <strong>Luật sư Doanh nghiệp</strong> và <strong>Tư vấn Kế toán thuế</strong>. 
               Chúng tôi cam kết mang lại giải pháp pháp lý thực chất, an toàn và tối ưu chi phí cho mọi khách hàng.

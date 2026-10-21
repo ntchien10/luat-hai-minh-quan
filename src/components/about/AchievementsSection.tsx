@@ -47,7 +47,11 @@ export const AchievementsSection: React.FC = () => {
             className="lg:col-span-3 pt-2"
           >
             <p className="text-slate-700 text-[14px] leading-relaxed text-justify">
-              {firmInfo.mission}
+              Sứ mệnh của Công ty Luật TNHH{" "}
+              <span translate="no" className="notranslate">
+                Hải Minh Quân
+              </span>{" "}
+              là bảo vệ quyền và lợi ích hợp pháp của khách hàng với phương châm Đức Sáng - Tâm Trong - Trí Vững.
             </p>
           </motion.div>
 

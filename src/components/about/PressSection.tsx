@@ -18,7 +18,10 @@ export const PressSection: React.FC = () => {
           className="text-center max-w-2xl mx-auto mb-10"
         >
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1816]">
-            Báo chí nói gì về Luật Hải Minh Quân
+            Báo chí nói gì về Luật{" "}
+            <span translate="no" className="notranslate">
+              Hải Minh Quân
+            </span>
           </h2>
           <div className="h-gap">
             <span>

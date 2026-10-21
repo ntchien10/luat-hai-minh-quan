@@ -58,7 +58,11 @@ export default function TeamPage() {
             </span>
           </div>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed mt-4">
-            Với bề dày kinh nghiệm thực chiến và đạo đức nghề nghiệp chuẩn mực, các Luật sư của Hải Minh Quân luôn tận tâm bảo vệ tối đa quyền lợi của Quý thân chủ.
+            Với bề dày kinh nghiệm thực chiến và đạo đức nghề nghiệp chuẩn mực, các Luật sư của{" "}
+            <span translate="no" className="notranslate">
+              Hải Minh Quân
+            </span>{" "}
+            luôn tận tâm bảo vệ tối đa quyền lợi của Quý thân chủ.
           </p>
         </div>
 

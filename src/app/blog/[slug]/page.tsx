@@ -283,7 +283,10 @@ export default async function BlogPostDetailPage({
                 <div className="my-8 p-6 bg-slate-50 border border-slate-200 rounded-none space-y-3">
                   <h3 className="font-serif text-lg font-bold text-[#1A1816] flex items-center gap-2">
                     <Scale className="w-5 h-5 text-[#96794F]" />
-                    Lời khuyên từ Luật Hải Minh Quân
+                    Lời khuyên từ Luật{" "}
+                    <span translate="no" className="notranslate">
+                      Hải Minh Quân
+                    </span>
                   </h3>
                   <p className="text-sm text-slate-600 leading-relaxed">
                     Mỗi vụ việc pháp lý đều có những tính chất và tình tiết đặc thù. Để được bảo vệ tối đa quyền và lợi ích hợp pháp của mình, Quý khách hàng vui lòng liên hệ trực tiếp với chúng tôi qua Hotline: <strong>{firmInfo.phone}</strong> hoặc để lại thông tin để được hỗ trợ chuyên sâu kịp thời.

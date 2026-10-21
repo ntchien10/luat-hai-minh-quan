@@ -183,7 +183,14 @@ export const Footer: React.FC = () => {
       <div className="bg-[#1A1714] py-4 border-t border-white/5">
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <p>
-            Copyright © 2026 <strong>{firmInfo.name}</strong>. All rights reserved.
+            Copyright © 2026{" "}
+            <strong>
+              Công ty Luật TNHH{" "}
+              <span translate="no" className="notranslate">
+                Hải Minh Quân
+              </span>
+            </strong>
+            . All rights reserved.
           </p>
 
           <div className="flex items-center gap-3">

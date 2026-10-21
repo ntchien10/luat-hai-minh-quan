@@ -91,7 +91,11 @@ export const HeroSection: React.FC = () => {
                   }}
                   className="text-slate-200 text-xs sm:text-sm md:text-base lg:text-[16px] leading-relaxed max-w-xl font-normal"
                 >
-                  {firmInfo.name} là đối tác pháp lý của bạn. <br className="hidden sm:block" />
+                  Công ty Luật TNHH{" "}
+                  <span translate="no" className="notranslate">
+                    Hải Minh Quân
+                  </span>{" "}
+                  là đối tác pháp lý của bạn. <br className="hidden sm:block" />
                   Sứ mệnh của chúng tôi là bảo vệ quyền lợi và cung cấp <br className="hidden sm:block" />
                   giải pháp pháp lý tối ưu cho mọi tình huống.
                 </motion.p>

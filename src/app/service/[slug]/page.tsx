@@ -329,7 +329,11 @@ export default async function ServiceDetailPage({
                 {service.scope && service.scope.length > 0 && (
                   <div className="pt-2 space-y-3">
                     <h3 className="font-serif text-base font-bold text-[#1A1816]">
-                      Các công việc trọng tâm do Luật Hải Minh Quân thực hiện:
+                      Các công việc trọng tâm do Luật{" "}
+                      <span translate="no" className="notranslate">
+                        Hải Minh Quân
+                      </span>{" "}
+                      thực hiện:
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {service.scope.map((item, idx) => (
@@ -394,7 +398,13 @@ export default async function ServiceDetailPage({
             <section className="space-y-5 pt-8 border-t border-slate-200">
               <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#1A1816] flex items-center gap-2.5">
                 <Sparkles className="w-6 h-6 text-[#DFBA73]" />
-                <span>Tại Sao Khách Hàng Tin Chọn Luật Hải Minh Quân?</span>
+                <span>
+                  Tại Sao Khách Hàng Tin Chọn Luật{" "}
+                  <span translate="no" className="notranslate">
+                    Hải Minh Quân
+                  </span>
+                  ?
+                </span>
               </h2>
               <div className="space-y-3">
                 {whyChoose.benefits.map((b, idx) => (

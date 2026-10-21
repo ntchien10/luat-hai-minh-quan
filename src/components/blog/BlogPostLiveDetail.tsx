@@ -267,7 +267,11 @@ export function BlogPostLiveDetail({ slug }: Props) {
                     Cần Luật Sư Tư Vấn Trực Tiếp Vụ Việc?
                   </h4>
                   <p className="text-xs text-slate-300 mt-1">
-                    Đội ngũ Luật sư thuộc Công ty Luật TNHH Hải Minh Quân luôn sẵn sàng bảo vệ quyền lợi hợp pháp của bạn.
+                    Đội ngũ Luật sư thuộc Công ty Luật TNHH{" "}
+                    <span translate="no" className="notranslate">
+                      Hải Minh Quân
+                    </span>{" "}
+                    luôn sẵn sàng bảo vệ quyền lợi hợp pháp của bạn.
                   </p>
                 </div>
                 <a
