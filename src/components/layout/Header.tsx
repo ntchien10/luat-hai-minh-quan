@@ -314,24 +314,19 @@ export const Header: React.FC = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsSticky(window.scrollY > 30);
+      setIsSticky(window.scrollY > 38);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <header
-      id="masthead"
-      className={`w-full bg-white z-50 transition-all duration-300 ${
-        isSticky
-          ? "fixed top-0 left-0 shadow-[0_2px_29px_rgba(34,34,34,0.14)]"
-          : "relative border-b border-slate-100"
-      }`}
-    >
-
-      {/* TOPBAR (Thanh thông tin đầu trang - Tone Vàng Ánh Kim Hoàng Gia Sang Trọng) */}
-      <div className="bg-gradient-to-r from-[#C59B27] via-[#FDE89D] to-[#B8871E] text-[#0B132B] text-xs font-semibold py-2 border-b border-[#A07316]/30 shadow-xs">
+    <>
+      {/* TOPBAR (Thanh thông tin đầu trang - Tone Vàng Ánh Kim Hoàng Gia - Cuộn tự nhiên theo trang, KHÔNG CỐ ĐỊNH) */}
+      <div
+        id="topbar-info"
+        className="w-full bg-gradient-to-r from-[#C59B27] via-[#FDE89D] to-[#B8871E] text-[#0B132B] text-xs font-semibold py-2 border-b border-[#A07316]/30 shadow-xs relative z-30"
+      >
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Bên trái: Địa chỉ (Hyperlink Google Maps) | Email | Hotline */}
           <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-[#0B132B] text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
@@ -454,10 +449,19 @@ export const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Navbar Wrapper */}
-      <div className={`transition-all duration-300 ${isSticky ? "py-2.5" : "py-3.5 sm:py-4"}`}>
-        <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
+      {/* MAIN NAVBAR (Thanh Menu chính nền trắng - CỐ ĐỊNH Ở ĐẦU TRANG KHI SCROLL) */}
+      <header
+        id="masthead"
+        className={`w-full bg-white z-50 sticky top-0 transition-all duration-300 ${
+          isSticky
+            ? "shadow-[0_4px_25px_rgba(0,0,0,0.08)]"
+            : "border-b border-slate-100"
+        }`}
+      >
+        {/* Main Navbar Wrapper */}
+        <div className={`transition-all duration-300 ${isSticky ? "py-2 sm:py-2.5" : "py-3 sm:py-4"}`}>
+          <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between">
           {/* Official Logo Brand (Bấm vào sẽ tải lại trang) */}
           <Link
             href="/"
@@ -1045,5 +1049,6 @@ export const Header: React.FC = () => {
         }}
       />
     </header>
+    </>
   );
 };
