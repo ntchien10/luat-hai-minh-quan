@@ -5,15 +5,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Calendar, User } from "lucide-react";
-import { usefulArticles } from "@/data/mockData";
 import { formatAmpersand } from "@/components/ui/Ampersand";
+import { useLiveArticles } from "@/lib/useLiveArticles";
 
 export const LegalNewsSection: React.FC = () => {
+  const { articles } = useLiveArticles();
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 3;
-  const totalPages = Math.ceil(usefulArticles.length / itemsPerPage);
+  const totalPages = Math.ceil(articles.length / itemsPerPage);
 
-  const displayedArticles = usefulArticles.slice(
+  const displayedArticles = articles.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );

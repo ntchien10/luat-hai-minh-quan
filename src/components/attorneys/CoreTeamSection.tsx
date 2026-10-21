@@ -4,14 +4,15 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { teamMembersList } from "@/data/mockData";
+import { useLiveTeam } from "@/lib/useLiveTeam";
 
 export const CoreTeamSection: React.FC = () => {
+  const { members } = useLiveTeam();
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 4;
-  const totalPages = Math.ceil(teamMembersList.length / itemsPerPage);
+  const totalPages = Math.ceil(members.length / itemsPerPage);
 
-  const displayedMembers = teamMembersList.slice(
+  const displayedMembers = members.slice(
     currentPage * itemsPerPage,
     (currentPage + 1) * itemsPerPage
   );

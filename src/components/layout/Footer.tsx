@@ -170,7 +170,16 @@ export const Footer: React.FC = () => {
             Copyright © 2026 <strong>{firmInfo.name}</strong>. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
+            <Link
+              href="/admin/"
+              className="text-slate-400 hover:text-[#D4AF37] transition-colors text-[11px] flex items-center gap-1"
+            >
+              <span>Quản trị</span>
+            </Link>
+
+            <span className="text-white/20">|</span>
+
             <span>Follow us:</span>
             <a
               href={firmInfo.facebookUrl || "https://www.facebook.com/luathaiminhquan.vn"}
