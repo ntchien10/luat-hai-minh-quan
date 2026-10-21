@@ -66,12 +66,13 @@ export const LegalNewsSection: React.FC = () => {
                   className="block relative h-60 w-full overflow-hidden bg-slate-100 cursor-pointer"
                 >
                   <Image
-                    src={article.imageUrl}
+                    src={article.imageUrl || (article as any).image_url || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg"}
                     alt={article.title}
                     width={600}
                     height={400}
                     sizes="(max-width: 768px) 100vw, 33vw"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    unoptimized
                   />
                   {/* Subtle decorative bottom banner across image */}
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-r from-[#96794F]/95 to-[#6E542D]/95 py-1.5 px-3 flex items-center justify-between text-[11px] text-white">

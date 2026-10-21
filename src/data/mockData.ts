@@ -587,6 +587,7 @@ export const firmInfo = {
   secondaryPhoneRaw: "0924189868",
   email: "luathaiminhquan@gmail.com",
   backupEmail: "luathaiminhquan@gmail.com",
+  mapUrl: "https://maps.app.goo.gl/Y91ruvwpFkt7DguQ7",
   facebookUrl: "https://www.facebook.com/luathaiminhquan.vn",
   headquarters: "Tầng 2, No13 - LK13-17 Khu đất dịch vụ Dọc Bún 1, Phường Hà Đông, Thành phố Hà Nội",
   hanoiOffice: "Tầng 2, No13 - LK13-17 Khu đất dịch vụ Dọc Bún 1, Phường Hà Đông, Thành phố Hà Nội",

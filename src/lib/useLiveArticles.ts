@@ -23,11 +23,14 @@ export function useLiveArticles(): { articles: BlogItem[]; isLive: boolean } {
             slug: a.slug,
             date: a.date,
             author: a.author,
-            imageUrl: a.image_url,
+            imageUrl:
+              a.image_url ||
+              (a as any).imageUrl ||
+              "/images/blog/phan-chia-di-san-theo-di-chuc.jpg",
             href: `/blog/${a.slug}/`,
             excerpt: a.excerpt,
             category: a.category,
-            serviceSlug: a.service_slug,
+            serviceSlug: a.service_slug || (a as any).serviceSlug || "luat-dan-su",
             content: a.content,
           }));
         setArticles(mapped);

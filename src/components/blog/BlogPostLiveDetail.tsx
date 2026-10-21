@@ -167,11 +167,10 @@ export function BlogPostLiveDetail({ slug }: Props) {
                 </li>
               </ul>
 
-              {/* Featured Image */}
-              {article.image_url && (
+              {(article.image_url || (article as any).imageUrl) && (
                 <div className="relative h-72 sm:h-96 md:h-[440px] w-full overflow-hidden bg-slate-100">
                   <Image
-                    src={article.image_url}
+                    src={article.image_url || (article as any).imageUrl || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg"}
                     alt={article.title}
                     width={1200}
                     height={675}

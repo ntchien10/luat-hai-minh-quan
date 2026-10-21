@@ -322,129 +322,112 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      {/* TOPBAR (Thanh thông tin đầu trang - Tone Vàng Ánh Kim Hoàng Gia - Cuộn tự nhiên theo trang, KHÔNG CỐ ĐỊNH) */}
+      {/* TOPBAR (Thanh thông tin đầu trang - Dark Forest Green #0E3A24 chuẩn thương hiệu - Cuộn tự nhiên theo trang, KHÔNG CỐ ĐỊNH) */}
       <div
         id="topbar-info"
-        className="w-full bg-gradient-to-r from-[#C59B27] via-[#FDE89D] to-[#B8871E] text-[#0B132B] text-xs font-semibold py-2 border-b border-[#A07316]/30 shadow-xs relative z-30"
+        className="w-full bg-[#0E3A24] text-white text-xs font-medium py-2 border-b border-white/10 shadow-xs relative z-30"
       >
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Bên trái: Địa chỉ (Hyperlink Google Maps) | Email | Hotline */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-[#0B132B] text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-slate-200 text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
             {/* Địa chỉ - Click mở Google Maps chỉ đường trực tiếp */}
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                firmInfo.headquarters
-              )}`}
+              href="https://maps.app.goo.gl/Y91ruvwpFkt7DguQ7"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 truncate hover:text-black hover:underline transition-all cursor-pointer group"
+              className="flex items-center gap-1.5 truncate hover:text-[#DFBA73] hover:underline transition-all cursor-pointer group"
               title={`Bấm để mở Google Maps chỉ đường:\n${firmInfo.headquarters}`}
             >
-              <MapPin className="w-3.5 h-3.5 text-[#0B132B] shrink-0 group-hover:scale-110 transition-transform" />
+              <MapPin className="w-3.5 h-3.5 text-[#DFBA73] shrink-0 group-hover:scale-110 transition-transform" />
               <span className="truncate underline-offset-2">
                 {firmInfo.addressShort}
               </span>
             </a>
 
-            <span className="text-[#0B132B]/30 select-none hidden md:inline">|</span>
+            <span className="text-white/20 select-none hidden md:inline">|</span>
 
             {/* Email */}
             <a
               href={`mailto:${firmInfo.email}`}
-              className="hidden md:flex items-center gap-1.5 shrink-0 hover:text-black hover:underline transition-colors"
+              className="hidden md:flex items-center gap-1.5 shrink-0 hover:text-[#DFBA73] hover:underline transition-colors"
             >
-              <Mail className="w-3.5 h-3.5 text-[#0B132B] shrink-0" />
+              <Mail className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
               <span>{firmInfo.email}</span>
             </a>
 
-            <span className="text-[#0B132B]/30 select-none hidden sm:inline">|</span>
+            <span className="text-white/20 select-none hidden sm:inline">|</span>
 
             {/* Hotline */}
             <a
               href={`tel:${firmInfo.hotlineRaw}`}
-              className="hidden sm:flex items-center gap-1.5 shrink-0 font-bold text-[#0B132B] hover:text-black transition-colors"
+              className="hidden sm:flex items-center gap-1.5 shrink-0 font-bold text-white hover:text-[#DFBA73] transition-colors"
             >
-              <Phone className="w-3.5 h-3.5 text-[#0B132B] shrink-0" />
+              <Phone className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
               <span>{firmInfo.phone}</span>
             </a>
           </div>
 
-          {/* Bên phải: Nút tìm kiếm & 4 Cờ ngôn ngữ */}
-          <div className="flex items-center gap-3 shrink-0 ml-3">
-            {/* Nút Tìm kiếm */}
+          {/* Bên phải: 4 Cờ ngôn ngữ (Đã bỏ kính lúp theo yêu cầu) */}
+          <div className="flex items-center gap-1.5 shrink-0 ml-3">
+            {/* Tiếng Anh */}
             <button
               type="button"
-              onClick={() => setSearchOpen(true)}
-              className="text-[#0B132B] hover:text-black hover:scale-110 transition-all p-1 cursor-pointer"
-              title="Tìm kiếm thông tin"
+              data-flag="en"
+              onClick={() => handleSelectLanguage("en")}
+              className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                currentLang === "en"
+                  ? "border-2 border-[#DFBA73] ring-2 ring-[#DFBA73]/50 scale-110 shadow-md opacity-100"
+                  : "border-white/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
+              }`}
+              title="English (Tiếng Anh)"
             >
-              <Search className="w-3.5 h-3.5" />
+              <FlagUK />
             </button>
 
-            <span className="text-[#0B132B]/30 select-none">|</span>
+            {/* Tiếng Nhật */}
+            <button
+              type="button"
+              data-flag="ja"
+              onClick={() => handleSelectLanguage("ja")}
+              className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                currentLang === "ja"
+                  ? "border-2 border-[#DFBA73] ring-2 ring-[#DFBA73]/50 scale-110 shadow-md opacity-100"
+                  : "border-white/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
+              }`}
+              title="日本語 (Tiếng Nhật)"
+            >
+              <FlagJapan />
+            </button>
 
-            {/* 4 Cờ Ngôn Ngữ */}
-            <div className="flex items-center gap-1.5">
-              {/* Tiếng Anh */}
-              <button
-                type="button"
-                data-flag="en"
-                onClick={() => handleSelectLanguage("en")}
-                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
-                  currentLang === "en"
-                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
-                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
-                }`}
-                title="English (Tiếng Anh)"
-              >
-                <FlagUK />
-              </button>
+            {/* Tiếng Hàn */}
+            <button
+              type="button"
+              data-flag="ko"
+              onClick={() => handleSelectLanguage("ko")}
+              className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                currentLang === "ko"
+                  ? "border-2 border-[#DFBA73] ring-2 ring-[#DFBA73]/50 scale-110 shadow-md opacity-100"
+                  : "border-white/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
+              }`}
+              title="한국어 (Tiếng Hàn)"
+            >
+              <FlagKorea />
+            </button>
 
-              {/* Tiếng Nhật */}
-              <button
-                type="button"
-                data-flag="ja"
-                onClick={() => handleSelectLanguage("ja")}
-                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
-                  currentLang === "ja"
-                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
-                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
-                }`}
-                title="日本語 (Tiếng Nhật)"
-              >
-                <FlagJapan />
-              </button>
-
-              {/* Tiếng Hàn */}
-              <button
-                type="button"
-                data-flag="ko"
-                onClick={() => handleSelectLanguage("ko")}
-                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
-                  currentLang === "ko"
-                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
-                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
-                }`}
-                title="한국어 (Tiếng Hàn)"
-              >
-                <FlagKorea />
-              </button>
-
-              {/* Tiếng Việt */}
-              <button
-                type="button"
-                data-flag="vi"
-                onClick={() => handleSelectLanguage("vi")}
-                className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
-                  currentLang === "vi"
-                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
-                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
-                }`}
-                title="Tiếng Việt"
-              >
-                <FlagVietnam />
-              </button>
-            </div>
+            {/* Tiếng Việt */}
+            <button
+              type="button"
+              data-flag="vi"
+              onClick={() => handleSelectLanguage("vi")}
+              className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
+                currentLang === "vi"
+                  ? "border-2 border-[#DFBA73] ring-2 ring-[#DFBA73]/50 scale-110 shadow-md opacity-100"
+                  : "border-white/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
+              }`}
+              title="Tiếng Việt"
+            >
+              <FlagVietnam />
+            </button>
           </div>
         </div>
       </div>
@@ -921,9 +904,7 @@ export const Header: React.FC = () => {
 
           {/* Địa chỉ trên mobile (Link mở Google Maps) */}
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              firmInfo.headquarters
-            )}`}
+            href="https://maps.app.goo.gl/Y91ruvwpFkt7DguQ7"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 py-2 text-xs text-slate-600 hover:text-[#96794F] border-b border-slate-100"

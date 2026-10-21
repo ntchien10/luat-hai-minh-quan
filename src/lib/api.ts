@@ -17,6 +17,7 @@ export interface DbArticle {
   date: string;
   author: string;
   image_url: string;
+  imageUrl?: string;
   excerpt: string;
   content: string;
   is_published?: boolean;
@@ -115,7 +116,32 @@ export async function fetchArticles(): Promise<{
     const local = localStorage.getItem("hmq_local_articles");
     if (local) {
       try {
-        return { articles: JSON.parse(local), error: null };
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          const normalized: DbArticle[] = parsed.map((a: any) => {
+            const img = a.image_url || a.imageUrl || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg";
+            return {
+              id: a.id,
+              slug: a.slug,
+              title: a.title,
+              service_slug: a.service_slug || a.serviceSlug || "luat-dan-su",
+              category: a.category,
+              date: a.date,
+              author: a.author,
+              image_url: img,
+              imageUrl: img,
+              excerpt: a.excerpt || "",
+              content: a.content || "",
+              is_published: a.is_published !== false,
+              created_at: a.created_at,
+              updated_at: a.updated_at,
+            };
+          });
+          try {
+            localStorage.setItem("hmq_local_articles", JSON.stringify(normalized));
+          } catch (e) {}
+          return { articles: normalized, error: null };
+        }
       } catch (err) {
         console.error(err);
       }
@@ -131,6 +157,7 @@ export async function fetchArticles(): Promise<{
     date: a.date,
     author: a.author,
     image_url: a.imageUrl,
+    imageUrl: a.imageUrl,
     excerpt: a.excerpt,
     content: a.content,
     is_published: true,
@@ -165,7 +192,26 @@ export async function saveArticle(
   // Lưu fallback vào localStorage
   if (typeof window !== "undefined") {
     const local = localStorage.getItem("hmq_local_articles");
-    const current: DbArticle[] = local ? JSON.parse(local) : allArticlesData;
+    const parsed = local ? JSON.parse(local) : null;
+    const current: DbArticle[] = Array.isArray(parsed)
+      ? parsed.map((a: any) => ({
+          ...a,
+          service_slug: a.service_slug || a.serviceSlug || "luat-dan-su",
+          image_url: a.image_url || a.imageUrl || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg",
+        }))
+      : allArticlesData.map((a) => ({
+          id: a.id,
+          slug: a.slug,
+          title: a.title,
+          service_slug: a.serviceSlug,
+          category: a.category,
+          date: a.date,
+          author: a.author,
+          image_url: a.imageUrl,
+          excerpt: a.excerpt,
+          content: a.content,
+          is_published: true,
+        }));
     const exists = current.find((a) => a.id === article.id);
     let updated: DbArticle[];
     if (exists) {
@@ -175,7 +221,16 @@ export async function saveArticle(
     } else {
       updated = [article as DbArticle, ...current];
     }
-    localStorage.setItem("hmq_local_articles", JSON.stringify(updated));
+    const cleanUpdated = updated.map((a: any) => {
+      const img = a.image_url || a.imageUrl || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg";
+      return {
+        ...a,
+        image_url: img,
+        imageUrl: img,
+        service_slug: a.service_slug || a.serviceSlug || "luat-dan-su",
+      };
+    });
+    localStorage.setItem("hmq_local_articles", JSON.stringify(cleanUpdated));
     return { success: true, error: null };
   }
 
@@ -243,7 +298,27 @@ export async function fetchTeamMembers(): Promise<{
     const local = localStorage.getItem("hmq_local_members");
     if (local) {
       try {
-        return { members: JSON.parse(local), error: null };
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          const normalized: DbTeamMember[] = parsed.map((m: any, idx: number) => ({
+            id: m.id || `member-${idx}`,
+            slug: m.slug || (m.link ? m.link.replace("/thanh-vien/", "").replace(/\/$/, "") : `member-${idx}`),
+            name: m.name,
+            role: m.role,
+            image_url: m.image_url || m.imageUrl || "/images/team/member-hai.jpg",
+            link: m.link || `/thanh-vien/${m.slug || `member-${idx}`}/`,
+            phone: m.phone || "0967 932 555",
+            email: m.email || "luathaiminhquan@gmail.com",
+            card_no: m.card_no || m.cardNo || "",
+            qualifications: m.qualifications || [],
+            experience: m.experience || [],
+            expertise: m.expertise || [],
+            bio: m.bio || "",
+            is_active: m.is_active !== false,
+            order_index: m.order_index ?? idx,
+          }));
+          return { members: normalized, error: null };
+        }
       } catch (err) {
         console.error(err);
       }
@@ -298,7 +373,29 @@ export async function saveTeamMember(
 
   if (typeof window !== "undefined") {
     const local = localStorage.getItem("hmq_local_members");
-    const current: DbTeamMember[] = local ? JSON.parse(local) : allTeamMembersArchive;
+    const parsed = local ? JSON.parse(local) : null;
+    const current: DbTeamMember[] = Array.isArray(parsed)
+      ? parsed.map((m: any, idx: number) => ({
+          ...m,
+          image_url: m.image_url || m.imageUrl || "/images/team/member-hai.jpg",
+        }))
+      : allTeamMembersArchive.map((m: TeamMember, idx) => ({
+          id: m.id,
+          slug: m.link.replace("/thanh-vien/", "").replace(/\/$/, ""),
+          name: m.name,
+          role: m.role,
+          image_url: m.imageUrl,
+          link: m.link,
+          phone: m.phone || "0967 932 555",
+          email: m.email || "luathaiminhquan@gmail.com",
+          card_no: m.cardNo || "",
+          qualifications: m.qualifications || [],
+          experience: m.experience || [],
+          expertise: m.expertise || [],
+          bio: m.bio || "",
+          is_active: idx === 0,
+          order_index: idx,
+        }));
     const exists = current.find((m) => m.id === member.id);
     let updated: DbTeamMember[];
     if (exists) {
@@ -308,7 +405,11 @@ export async function saveTeamMember(
     } else {
       updated = [...current, member as DbTeamMember];
     }
-    localStorage.setItem("hmq_local_members", JSON.stringify(updated));
+    const cleanUpdated = updated.map((m: any) => ({
+      ...m,
+      image_url: m.image_url || m.imageUrl || "/images/team/member-hai.jpg",
+    }));
+    localStorage.setItem("hmq_local_members", JSON.stringify(cleanUpdated));
     return { success: true, error: null };
   }
 

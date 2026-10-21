@@ -19,10 +19,12 @@ import {
   fetchArticles,
   saveArticle,
   deleteArticle,
+  fetchTeamMembers,
   DbArticle,
+  DbTeamMember,
 } from "@/lib/api";
 import { allArticlesData } from "@/data/articlesData";
-import { practiceServices } from "@/data/mockData";
+import { practiceServices, allTeamMembersArchive } from "@/data/mockData";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
@@ -39,8 +41,41 @@ function slugify(text: string): string {
     .replace(/-+/g, "-");
 }
 
+function parseArticleDateToIso(dateStr: string): string {
+  if (!dateStr) return new Date().toISOString().split("T")[0];
+  const trimmed = dateStr.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const vnMatch = trimmed.match(/(\d{1,2})\s*Tháng\s*(\d{1,2}),?\s*(\d{4})/i);
+  if (vnMatch) {
+    const d = vnMatch[1].padStart(2, "0");
+    const m = vnMatch[2].padStart(2, "0");
+    const y = vnMatch[3];
+    return `${y}-${m}-${d}`;
+  }
+  const slashMatch = trimmed.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (slashMatch) {
+    const d = slashMatch[1].padStart(2, "0");
+    const m = slashMatch[2].padStart(2, "0");
+    const y = slashMatch[3];
+    return `${y}-${m}-${d}`;
+  }
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().split("T")[0];
+  }
+  return new Date().toISOString().split("T")[0];
+}
+
+function formatIsoToArticleDate(isoStr: string): string {
+  if (!isoStr) return "";
+  const [y, m, d] = isoStr.split("-");
+  if (!y || !m || !d) return isoStr;
+  return `${parseInt(d, 10)} Tháng ${parseInt(m, 10)}, ${y}`;
+}
+
 export default function ArticlesAdminPage() {
   const [articles, setArticles] = useState<DbArticle[]>([]);
+  const [teamMembers, setTeamMembers] = useState<DbTeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -58,7 +93,7 @@ export default function ArticlesAdminPage() {
     title: "",
     service_slug: "luat-dan-su",
     category: "Luật dân sự",
-    date: "21 Tháng 10, 2026",
+    date: formatIsoToArticleDate(new Date().toISOString().split("T")[0]),
     author: "Ls. Đỗ Thị Thanh Hải",
     image_url: "/images/blog/phan-chia-di-san-theo-di-chuc.jpg",
     excerpt: "",
@@ -92,13 +127,35 @@ export default function ArticlesAdminPage() {
 
   useEffect(() => {
     loadArticles();
+
+    const loadMembers = async () => {
+      const res = await fetchTeamMembers();
+      if (res.members && res.members.length > 0) {
+        setTeamMembers(res.members);
+      } else {
+        setTeamMembers(
+          allTeamMembersArchive.map((m, idx) => ({
+            id: m.id,
+            slug: m.link.replace("/thanh-vien/", "").replace(/\/$/, ""),
+            name: m.name,
+            role: m.role,
+            image_url: m.imageUrl,
+            link: m.link,
+            phone: m.phone || "0967 932 555",
+            email: m.email || "luathaiminhquan@gmail.com",
+            is_active: true,
+          }))
+        );
+      }
+    };
+    loadMembers();
   }, [loadArticles]);
 
   const openCreateModal = () => {
     setIsEditing(false);
     setModalError(null);
-    const today = new Date();
-    const dateFormatted = `${today.getDate()} Tháng ${today.getMonth() + 1}, ${today.getFullYear()}`;
+    const dateFormatted = formatIsoToArticleDate(new Date().toISOString().split("T")[0]);
+    const defaultAuthor = teamMembers[0]?.name || "Ls. Đỗ Thị Thanh Hải";
     setFormData({
       id: `article-${Date.now()}`,
       slug: "",
@@ -106,7 +163,7 @@ export default function ArticlesAdminPage() {
       service_slug: "luat-dan-su",
       category: "Luật dân sự",
       date: dateFormatted,
-      author: "Ls. Đỗ Thị Thanh Hải",
+      author: defaultAuthor,
       image_url: "",
       excerpt: "",
       content: "",
@@ -285,7 +342,7 @@ export default function ArticlesAdminPage() {
                       <div className="flex items-center gap-2.5">
                         <div className="relative w-9 h-9 rounded bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-xs">
                           <Image
-                            src={art.image_url || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg"}
+                            src={art.image_url || (art as any).imageUrl || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg"}
                             alt={art.title}
                             fill
                             className="object-cover"
@@ -453,32 +510,47 @@ export default function ArticlesAdminPage() {
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                    Luật sư tác giả
+                    Luật sư tác giả *
                   </label>
-                  <input
-                    type="text"
+                  <select
+                    required
                     value={formData.author}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, author: e.target.value }))
                     }
-                    placeholder="Ls. Đỗ Thị Thanh Hải"
-                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-[#96794F]"
-                  />
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-[#96794F] bg-white cursor-pointer"
+                  >
+                    {teamMembers.map((m) => (
+                      <option key={m.id || m.slug} value={m.name}>
+                        {m.name} {m.role ? `(${m.role})` : ""}
+                      </option>
+                    ))}
+                    {formData.author &&
+                      teamMembers.every((m) => m.name !== formData.author) && (
+                        <option value={formData.author}>{formData.author}</option>
+                      )}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                    Ngày đăng
+                    Ngày đăng *
                   </label>
                   <input
-                    type="text"
-                    value={formData.date}
+                    type="date"
+                    required
+                    value={parseArticleDateToIso(formData.date)}
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, date: e.target.value }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        date: formatIsoToArticleDate(e.target.value),
+                      }))
                     }
-                    placeholder="21 Tháng 10, 2026"
-                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-[#96794F]"
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:border-[#96794F] bg-white cursor-pointer"
                   />
+                  <span className="text-[10.5px] text-slate-500 mt-1 block">
+                    Hiển thị: <strong>{formData.date || "Chưa chọn ngày"}</strong>
+                  </span>
                 </div>
               </div>
 
