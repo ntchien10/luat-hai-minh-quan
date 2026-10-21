@@ -233,6 +233,48 @@ export default function TeamAdminPage() {
       m.role.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const renderCardInfo = (cardNo?: string, phone?: string) => {
+    if (!cardNo && !phone) return <span className="text-slate-400">—</span>;
+
+    let mainNo = "";
+    let subText = "";
+    if (cardNo) {
+      const match = cardNo.match(/^([^(]+)(?:\((.*)\))?$/);
+      if (match) {
+        mainNo = match[1].trim();
+        subText = match[2]?.trim() || "";
+      } else {
+        mainNo = cardNo;
+      }
+    }
+
+    return (
+      <div className="space-y-0.5 max-w-[160px]">
+        {cardNo && (
+          <div
+            className="text-[11px] font-mono text-[#96794F] font-bold leading-tight"
+            title={cardNo}
+          >
+            Thẻ: {mainNo}
+          </div>
+        )}
+        {subText && (
+          <div
+            className="text-[10px] text-slate-500 leading-tight truncate"
+            title={cardNo}
+          >
+            {subText.includes("Đoàn Luật sư") ? "Đoàn LS Hà Nội" : subText}
+          </div>
+        )}
+        {phone && (
+          <div className="text-[11px] text-slate-600 font-mono leading-tight">
+            {phone}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header & Action */}
@@ -297,23 +339,23 @@ export default function TeamAdminPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[960px]">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse table-auto">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="py-3.5 px-4 min-w-[280px]">Luật sư / Thành viên</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[160px]">Chức danh</th>
-                  <th className="py-3.5 px-4 whitespace-nowrap min-w-[180px]">Số thẻ / Liên hệ</th>
-                  <th className="py-3.5 px-4 text-center whitespace-nowrap min-w-[150px]">Hiển thị ngoài web</th>
-                  <th className="py-3.5 px-4 text-right whitespace-nowrap min-w-[120px] pr-6">Thao tác</th>
+                  <th className="py-3 px-3 sm:px-4">Luật sư / Thành viên</th>
+                  <th className="py-3 px-3 sm:px-4 w-[160px]">Chức danh</th>
+                  <th className="py-3 px-3 sm:px-4 w-[160px]">Số thẻ / Liên hệ</th>
+                  <th className="py-3 px-2 sm:px-3 text-center w-[130px] whitespace-nowrap">Hiển thị</th>
+                  <th className="py-3 px-3 sm:px-4 text-right w-[90px] whitespace-nowrap pr-4">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
                 {filteredMembers.map((member) => (
                   <tr key={member.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                    <td className="py-3 px-3 sm:px-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-xs">
                           <Image
                             src={member.image_url}
                             alt={member.name}
@@ -323,39 +365,32 @@ export default function TeamAdminPage() {
                           />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="font-semibold text-slate-900 text-sm whitespace-nowrap">
+                          <h4 className="font-semibold text-slate-900 text-xs sm:text-sm">
                             {member.name}
                           </h4>
-                          <span className="text-[11px] text-slate-400 font-mono truncate block">
+                          <span className="text-[10.5px] text-slate-400 font-mono truncate block max-w-[180px]">
                             {member.link}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <span className="font-medium text-slate-800">
+                    <td className="py-3 px-3 sm:px-4">
+                      <span className="font-medium text-slate-800 text-xs leading-snug line-clamp-2">
                         {member.role}
                       </span>
                     </td>
 
-                    <td className="py-3.5 px-4 whitespace-nowrap">
-                      <div className="space-y-0.5 text-slate-600">
-                        {member.card_no && (
-                          <div className="text-[11px] font-mono text-[#96794F] font-semibold">
-                            Thẻ LS: {member.card_no}
-                          </div>
-                        )}
-                        <div className="text-[11px]">{member.phone}</div>
-                      </div>
+                    <td className="py-3 px-3 sm:px-4">
+                      {renderCardInfo(member.card_no, member.phone)}
                     </td>
 
                     {/* Toggle Active Switch */}
-                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                    <td className="py-3 px-2 sm:px-3 text-center whitespace-nowrap">
                       <button
                         type="button"
                         onClick={() => handleToggleActive(member)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
                           member.is_active
                             ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                             : "bg-slate-100 text-slate-500 hover:bg-slate-200"
@@ -364,27 +399,27 @@ export default function TeamAdminPage() {
                       >
                         {member.is_active ? (
                           <>
-                            <ToggleRight className="w-4 h-4 text-emerald-600" />
+                            <ToggleRight className="w-3.5 h-3.5 text-emerald-600" />
                             Đang hiển thị
                           </>
                         ) : (
                           <>
-                            <ToggleLeft className="w-4 h-4 text-slate-400" />
+                            <ToggleLeft className="w-3.5 h-3.5 text-slate-400" />
                             Đang ẩn
                           </>
                         )}
                       </button>
                     </td>
 
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap pr-6">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3 px-3 sm:px-4 text-right whitespace-nowrap pr-4">
+                      <div className="flex items-center justify-end gap-1">
                         <Link
                           href={member.link}
                           target="_blank"
                           title="Xem trang cá nhân"
                           className="p-1.5 text-slate-400 hover:text-[#96794F] hover:bg-slate-100 rounded transition-colors"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5" />
                         </Link>
                         <button
                           type="button"
@@ -392,7 +427,7 @@ export default function TeamAdminPage() {
                           title="Chỉnh sửa"
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           type="button"
