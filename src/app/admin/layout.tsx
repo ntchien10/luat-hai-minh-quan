@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard,
   FileText,
@@ -10,7 +11,6 @@ import {
   LogOut,
   ExternalLink,
   ShieldCheck,
-  Scale,
   Menu,
   X,
   UserCog,
@@ -136,12 +136,19 @@ export default function AdminLayout({
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
-            <Link href="/admin/" className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded bg-[#96794F]/20 border border-[#96794F]/40 flex items-center justify-center text-[#96794F]">
-                <Scale className="w-5 h-5" />
+            <Link href="/admin/" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-lg bg-white/10 p-1 border border-[#96794F]/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm">
+                <Image
+                  src="/images/logo.png"
+                  alt="Công ty Luật TNHH Hải Minh Quân"
+                  width={40}
+                  height={40}
+                  priority
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
-                <span className="font-serif font-bold text-base sm:text-lg tracking-wide text-white block leading-tight">
+                <span className="font-serif font-bold text-base sm:text-lg tracking-wide text-white block leading-tight group-hover:text-[#E5B869] transition-colors">
                   HẢI MINH QUÂN
                 </span>
                 <span className="text-[10px] text-[#96794F] font-semibold tracking-wider uppercase block">

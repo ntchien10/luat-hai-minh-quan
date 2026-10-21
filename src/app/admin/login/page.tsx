@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Scale, Lock, User, ArrowRight, AlertCircle, Loader2, Server } from "lucide-react";
+import Image from "next/image";
+import { Lock, User, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { loginAdmin } from "@/lib/api";
 
 export default function AdminLoginPage() {
@@ -50,8 +51,15 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md bg-[#0F1E36]/90 backdrop-blur-md border border-[#96794F]/30 rounded-xl shadow-2xl p-6 sm:p-8 relative z-10">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#96794F]/30 to-[#96794F]/10 border border-[#96794F]/50 flex items-center justify-center text-[#E5B869] mx-auto mb-4 shadow-lg shadow-[#96794F]/10">
-            <Scale className="w-8 h-8" />
+          <div className="w-16 h-16 rounded-2xl bg-white/10 p-2 border border-[#96794F]/40 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-[#96794F]/10">
+            <Image
+              src="/images/logo.png"
+              alt="Công ty Luật TNHH Hải Minh Quân"
+              width={56}
+              height={56}
+              priority
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-wide text-white">
             CÔNG TY LUẬT HẢI MINH QUÂN
