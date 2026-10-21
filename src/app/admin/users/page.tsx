@@ -14,14 +14,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Server,
 } from "lucide-react";
 import {
   fetchAdminUsers,
   saveAdminUser,
   deleteAdminUser,
   changeAdminPassword,
-  getSystemStatus,
   AdminUser,
 } from "@/lib/api";
 
@@ -62,9 +60,6 @@ export default function UsersAdminPage() {
     confirmPassword: "",
   });
 
-  // Trạng thái hệ thống & sao lưu
-  const [systemInfo, setSystemInfo] = useState<{ database?: string; uploads_writable?: boolean }>({});
-
   const isAdmin = currentRole === "admin";
 
   const loadData = useCallback(async () => {
@@ -76,15 +71,9 @@ export default function UsersAdminPage() {
       setCurrentRole(role);
     }
 
-    const [uRes, sRes] = await Promise.all([fetchAdminUsers(), getSystemStatus()]);
+    const uRes = await fetchAdminUsers();
     if (uRes.users) {
       setUsers(uRes.users);
-    }
-    if (sRes.success) {
-      setSystemInfo({
-        database: sRes.database,
-        uploads_writable: sRes.uploads_writable,
-      });
     }
     setIsLoading(false);
   }, []);
@@ -204,8 +193,12 @@ export default function UsersAdminPage() {
     await loadData();
   };
 
-  // Mở modal đổi mật khẩu (TẤT CẢ TÀI KHOẢN ĐỀU CÓ QUYỀN)
+  // Mở modal đổi mật khẩu (Admin đổi được cho mọi người, user thường chỉ đổi được của chính mình)
   const openChangePasswordModal = (u: AdminUser) => {
+    if (!isAdmin && u.username !== currentUser) {
+      alert("Bạn chỉ có quyền đổi mật khẩu cho tài khoản của chính mình!");
+      return;
+    }
     setTargetPasswordUser(u);
     setPasswordModalError(null);
     setPasswordFormData({
@@ -220,6 +213,11 @@ export default function UsersAdminPage() {
   const handleSavePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!targetPasswordUser) return;
+
+    if (!isAdmin && targetPasswordUser.username !== currentUser) {
+      setPasswordModalError("Bạn chỉ có quyền đổi mật khẩu cho tài khoản của chính mình.");
+      return;
+    }
 
     const isSelf = targetPasswordUser.username === currentUser;
 
@@ -451,16 +449,22 @@ export default function UsersAdminPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap pr-6">
                         <div className="flex items-center justify-end gap-2">
-                          {/* ĐỔI MẬT KHẨU - TẤT CẢ TÀI KHOẢN ĐỀU BẤM ĐƯỢC (Tự đổi cho mình hoặc Admin đổi cho người khác) */}
-                          <button
-                            type="button"
-                            onClick={() => openChangePasswordModal(u)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-[#96794F] text-slate-700 hover:text-white rounded-md transition-colors"
-                            title={`Đổi mật khẩu cho ${u.username}`}
-                          >
-                            <KeyRound className="w-3.5 h-3.5" />
-                            <span>Đổi mật khẩu</span>
-                          </button>
+                          {/* ĐỔI MẬT KHẨU - Admin được đổi cho tất cả, user khác chỉ đổi được cho chính mình */}
+                          {(isAdmin || isCurrent) ? (
+                            <button
+                              type="button"
+                              onClick={() => openChangePasswordModal(u)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-[#96794F] text-slate-700 hover:text-white rounded-md transition-colors"
+                              title={`Đổi mật khẩu cho ${u.username}`}
+                            >
+                              <KeyRound className="w-3.5 h-3.5" />
+                              <span>Đổi mật khẩu</span>
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-400 italic px-2 select-none">
+                              Chỉ xem
+                            </span>
+                          )}
 
                           {/* SỬA THÔNG TIN - Chỉ admin hoặc tự sửa tên của mình */}
                           {(isAdmin || isCurrent) && (
@@ -494,38 +498,6 @@ export default function UsersAdminPage() {
             </table>
           </div>
         )}
-      </div>
-
-      {/* Backup & System Status Section */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm">
-        <h2 className="font-serif text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
-          <Server className="w-5 h-5 text-[#96794F]" />
-          Trạng Thái Cơ Sở Dữ Liệu Hosting
-        </h2>
-        <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-          Hệ thống quản trị và dữ liệu tài khoản được lưu trữ an toàn trong tệp SQLite nội bộ trên host của bạn.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-between">
-            <span className="text-slate-500 mb-1">Tệp SQLite:</span>
-            <span className="font-mono font-bold text-slate-800 break-all">
-              {systemInfo.database || "api/database.sqlite"}
-            </span>
-          </div>
-          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-between">
-            <span className="text-slate-500 mb-1">Thư mục Uploads:</span>
-            <span className="font-semibold text-emerald-600">
-              {systemInfo.uploads_writable !== false ? "public_html/uploads/ (Quyền 755)" : "Cần cấp quyền 755"}
-            </span>
-          </div>
-          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-between">
-            <span className="text-slate-500 mb-1">Sao lưu dữ liệu:</span>
-            <span className="text-slate-700">
-              Chỉ cần tải file <code>database.sqlite</code> về máy là đã sao lưu 100%!
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* MODAL 1: THÊM / SỬA TÀI KHOẢN (Chỉ admin) */}

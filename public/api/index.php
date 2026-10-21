@@ -527,10 +527,17 @@ switch ($action) {
             exit;
         }
 
-        // Nếu admin đổi mật khẩu cho người khác: không cần mật khẩu cũ
-        // Nếu người dùng tự đổi mật khẩu của mình: bắt buộc kiểm tra mật khẩu cũ
-        $isAdminOverride = ($requesterUsername === 'admin');
-        if (!$isAdminOverride) {
+        // Kiểm tra quyền của người yêu cầu: Admin có quyền đổi cho bất kỳ ai, user khác chỉ được đổi của chính mình
+        $reqUserStmt = $pdo->prepare("SELECT role FROM admin_users WHERE username = ?");
+        $reqUserStmt->execute([$requesterUsername]);
+        $reqUser = $reqUserStmt->fetch();
+        $isAdmin = ($requesterUsername === 'admin' || ($reqUser && $reqUser['role'] === 'admin'));
+
+        if (!$isAdmin) {
+            if ($requesterUsername !== $username) {
+                echo json_encode(['success' => false, 'error' => 'Bạn chỉ có quyền đổi mật khẩu cho tài khoản của chính mình']);
+                exit;
+            }
             if ($user['password'] !== $oldPassword) {
                 echo json_encode(['success' => false, 'error' => 'Mật khẩu hiện tại không chính xác']);
                 exit;
