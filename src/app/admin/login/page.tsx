@@ -39,11 +39,6 @@ export default function AdminLoginPage() {
     }
   };
 
-  const fillAccount = (u: string, p: string) => {
-    setUsername(u);
-    setPassword(p);
-    setErrorMsg(null);
-  };
 
   return (
     <div className="min-h-screen bg-[#070D18] flex flex-col justify-center items-center px-4 py-12 text-slate-100 relative overflow-hidden">
@@ -64,15 +59,6 @@ export default function AdminLoginPage() {
           <p className="text-xs uppercase tracking-widest text-[#96794F] font-semibold mt-1">
             Hệ Thống Quản Trị Nội Dung (CMS)
           </p>
-        </div>
-
-        {/* Free Hosting SQLite info badge */}
-        <div className="mb-6 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-xs text-emerald-200/90 leading-relaxed">
-          <div className="flex items-center gap-1.5 font-semibold text-emerald-300 mb-1">
-            <Server className="w-4 h-4 text-emerald-400 shrink-0" />
-            Lưu trữ Hosting 100% Miễn Phí (PHP + SQLite)
-          </div>
-          Hệ thống chạy trực tiếp trên hosting của bạn, không tốn chi phí bên thứ 3, không bao giờ bị tạm dừng (sleep) và tự động lưu ảnh vào thư mục <code>/uploads/</code>.
         </div>
 
         {/* Login Form */}
@@ -113,9 +99,7 @@ export default function AdminLoginPage() {
                 className="w-full pl-9 pr-3 py-2.5 bg-slate-900/80 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#96794F] focus:ring-1 focus:ring-[#96794F] transition-all"
               />
             </div>
-            <p className="text-[11px] text-slate-400 mt-1">
-              Mật khẩu mặc định: <code className="text-[#E5B869] font-mono">admin@123</code> (Đổi trong <code className="text-slate-300">public/api/index.php</code>)
-            </p>
+
           </div>
 
           {errorMsg && (
@@ -144,28 +128,6 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Fast Fill Demo Credentials (vẫn phải bấm Đăng Nhập để xác thực) */}
-        <div className="mt-5 pt-4 border-t border-slate-700/60">
-          <p className="text-[11px] text-slate-400 text-center mb-2 font-medium">
-            Tài khoản mẫu (bấm để điền nhanh & xác thực):
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => fillAccount("admin", "admin@123")}
-              className="py-1.5 px-2 bg-slate-800/80 hover:bg-[#96794F]/20 border border-slate-700 hover:border-[#96794F]/50 rounded text-[11px] text-[#DFBA73] font-medium transition-colors text-center"
-            >
-              👑 Admin: <span className="font-mono text-slate-300">admin</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => fillAccount("bientapvien", "editor@123")}
-              className="py-1.5 px-2 bg-slate-800/80 hover:bg-[#96794F]/20 border border-slate-700 hover:border-[#96794F]/50 rounded text-[11px] text-slate-300 font-medium transition-colors text-center"
-            >
-              ✍️ Editor: <span className="font-mono text-slate-400">bientapvien</span>
-            </button>
-          </div>
-        </div>
 
         {/* Return to public site */}
         <div className="mt-4 text-center">
