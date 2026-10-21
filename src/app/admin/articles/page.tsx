@@ -634,7 +634,7 @@ export default function ArticlesAdminPage() {
                     setFormData((prev) => ({ ...prev, image_url: url }))
                   }
                   folder="articles"
-                  label="Ảnh bài viết (Lưu trữ trực tiếp trên Hosting /uploads/) *"
+                  label="Ảnh bài viết *"
                   description="Ảnh tỷ lệ 16:9 hoặc 3:2, dung lượng tối đa 5MB"
                 />
               </div>

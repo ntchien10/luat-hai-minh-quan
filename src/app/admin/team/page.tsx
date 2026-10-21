@@ -615,7 +615,7 @@ export default function TeamAdminPage() {
                     setFormData((prev) => ({ ...prev, image_url: url }))
                   }
                   folder="team"
-                  label="Ảnh chân dung Luật sư (Lưu trữ trực tiếp trên Hosting /uploads/) *"
+                  label="Ảnh chân dung Luật sư *"
                   description="Ảnh chân dung tỷ lệ 3:4 hoặc vuông, chân thực và sắc nét"
                 />
               </div>

@@ -18,7 +18,7 @@ export function ImageUploader({
   onChange,
   folder = "articles",
   label = "Hình ảnh đại diện",
-  description = "Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB (Lưu trực tiếp trên Hosting)",
+  description = "Hỗ trợ định dạng JPG, PNG, WEBP tối đa 5MB",
 }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);

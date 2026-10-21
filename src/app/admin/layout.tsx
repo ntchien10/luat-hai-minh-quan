@@ -267,9 +267,9 @@ export default function AdminLayout({
               <div className="px-3 py-2 bg-slate-50 rounded text-xs text-slate-500">
                 <div className="flex items-center gap-1.5 font-semibold text-slate-700 mb-1">
                   <ShieldCheck className="w-4 h-4 text-[#96794F]" />
-                  Phiên bản 1.0 CMS Host
+                  Phiên bản 1.0 CMS
                 </div>
-                Luật Hải Minh Quân - Hệ thống quản lý dữ liệu trực tiếp trên Hosting.
+                Luật Hải Minh Quân - Hệ thống quản trị nội dung website.
               </div>
             </div>
           </nav>

@@ -8,7 +8,6 @@ import {
   Users,
   PlusCircle,
   ArrowRight,
-  Sparkles,
   Eye,
   Send,
   TrendingUp,
@@ -76,15 +75,11 @@ export default function AdminDashboardPage() {
         <div className="absolute right-0 top-0 translate-x-10 -translate-y-10 w-64 h-64 bg-[#96794F]/10 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#96794F]/20 text-[#E5B869] text-xs font-semibold uppercase tracking-wider mb-3 border border-[#96794F]/40">
-            <Sparkles className="w-3.5 h-3.5" />
-            Hệ Thống Quản Trị Độc Lập 100% Miễn Phí
-          </div>
           <h1 className="font-serif text-2xl sm:text-3xl font-bold tracking-tight text-white mb-2">
             Cổng Quản Trị Luật Hải Minh Quân
           </h1>
           <p className="text-slate-300 text-sm max-w-2xl leading-relaxed">
-            Hệ thống chạy hoàn toàn độc lập trên hosting của bạn (PHP + SQLite), không phụ thuộc bên thứ 3, không bao giờ bị tạm dừng (sleep), không tốn chi phí duy trì hàng tháng.
+            Hệ thống quản trị nội dung website Công ty Luật TNHH Hải Minh Quân.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
