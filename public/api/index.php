@@ -323,6 +323,30 @@ switch ($action) {
             $is_published, $created_at, $updated_at
         ]);
 
+        // Tự động tạo thư mục tĩnh trên hosting: /blog/{slug}/index.html nếu chưa có
+        // Giúp Web Server (Apache/Nginx/LiteSpeed) tìm thấy file HTML ngay lập tức mà không bao giờ bị lỗi 404!
+        try {
+            $webRoot = realpath(__DIR__ . '/..');
+            if ($webRoot && is_dir($webRoot . '/blog')) {
+                $targetBlogDir = $webRoot . '/blog/' . $slug;
+                if (!file_exists($targetBlogDir)) {
+                    @mkdir($targetBlogDir, 0755, true);
+                }
+                $templateFile = $webRoot . '/404.html';
+                if (!file_exists($templateFile)) {
+                    $templateFile = $webRoot . '/index.html';
+                }
+                if (file_exists($templateFile)) {
+                    $htmlContent = file_get_contents($templateFile);
+                    $escapedTitle = htmlspecialchars($title, ENT_QUOTES, 'UTF-8');
+                    $htmlContent = preg_replace('/<title>.*?<\/title>/i', '<title>' . $escapedTitle . ' | Luật Hải Minh Quân</title>', $htmlContent);
+                    @file_put_contents($targetBlogDir . '/index.html', $htmlContent);
+                }
+            }
+        } catch (Exception $e) {
+            // Không chặn nếu quyền ghi bị giới hạn, vì đã có fallback .htaccess xử lý
+        }
+
         echo json_encode(['success' => true, 'id' => $id]);
         break;
 
@@ -332,6 +356,26 @@ switch ($action) {
             echo json_encode(['success' => false, 'error' => 'Thiếu ID bài viết']);
             exit;
         }
+
+        // Tìm slug trước khi xóa để dọn dẹp thư mục tĩnh nếu có
+        try {
+            $stmtSelect = $pdo->prepare("SELECT slug FROM articles WHERE id = ?");
+            $stmtSelect->execute([$id]);
+            $artRow = $stmtSelect->fetch();
+            if ($artRow && !empty($artRow['slug'])) {
+                $webRoot = realpath(__DIR__ . '/..');
+                if ($webRoot) {
+                    $targetBlogDir = $webRoot . '/blog/' . $artRow['slug'];
+                    if (file_exists($targetBlogDir . '/index.html')) {
+                        @unlink($targetBlogDir . '/index.html');
+                    }
+                    if (is_dir($targetBlogDir)) {
+                        @rmdir($targetBlogDir);
+                    }
+                }
+            }
+        } catch (Exception $e) {}
+
         $stmt = $pdo->prepare("DELETE FROM articles WHERE id = ?");
         $stmt->execute([$id]);
         echo json_encode(['success' => true]);

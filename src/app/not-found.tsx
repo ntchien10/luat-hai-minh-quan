@@ -1,11 +1,74 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Scale, ArrowLeft, Home, PhoneCall } from "lucide-react";
+import { Scale, Home, PhoneCall, Loader2 } from "lucide-react";
 import { firmInfo } from "@/data/mockData";
+import { BlogPostLiveDetail } from "@/components/blog/BlogPostLiveDetail";
+import { fetchArticles } from "@/lib/api";
 
 export default function NotFound() {
+  const [blogSlug, setBlogSlug] = useState<string | null>(null);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const pathname = window.location.pathname;
+    // Kiểm tra xem URL có phải là trang chi tiết bài viết /blog/<slug> không
+    const blogMatch = pathname.match(/^\/blog\/([^/?#]+)/i);
+
+    if (blogMatch && blogMatch[1]) {
+      const rawSlug = blogMatch[1];
+      const cleanSlug = decodeURIComponent(rawSlug).replace(/\/$/, "").trim().toLowerCase();
+
+      // Kiểm tra trong database/API hoặc localStorage
+      fetchArticles()
+        .then((res) => {
+          if (res.articles && res.articles.length > 0) {
+            const found = res.articles.find((a) => {
+              const aSlug = decodeURIComponent(a.slug || "").replace(/\/$/, "").trim().toLowerCase();
+              return aSlug === cleanSlug || a.id === cleanSlug || aSlug.includes(cleanSlug) || cleanSlug.includes(aSlug);
+            });
+
+            if (found) {
+              setBlogSlug(cleanSlug);
+              setIsChecking(false);
+              return;
+            }
+          }
+          setIsChecking(false);
+        })
+        .catch(() => {
+          setIsChecking(false);
+        });
+    } else {
+      setIsChecking(false);
+    }
+  }, []);
+
+  // Nếu là bài viết động hợp lệ, render giao diện chi tiết bài viết trực tiếp
+  if (blogSlug) {
+    return <BlogPostLiveDetail slug={blogSlug} />;
+  }
+
+  // Trong lúc kiểm tra xem slug có trong database không, hiển thị loading nhẹ nhàng
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white text-[#333333]">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-[#96794F] animate-spin" />
+          <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
+            Đang tải dữ liệu bài viết...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Nếu thực sự không tồn tại, hiển thị trang 404 chuẩn
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#333333]">
       <Header />

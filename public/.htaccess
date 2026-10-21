@@ -48,6 +48,18 @@ Options -Indexes
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteCond %{REQUEST_URI} !(.*)/$
     RewriteRule ^(.*)$ /$1/ [L,R=301]
+
+    # Cấu hình trang lỗi 404 chuẩn của Next.js
+    ErrorDocument 404 /404.html
+
+    # Điều hướng nội bộ (fallback) cho các bài viết mới tạo qua Admin (chưa có sẵn thư mục tĩnh HTML trên hosting) sang 404.html
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^blog/([^/]+)/?$ /404.html [L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^thanh-vien/([^/]+)/?$ /404.html [L]
 </IfModule>
 
 # ==============================================================================

@@ -53,9 +53,9 @@ server {
     rewrite ^/luat-su/(.*)$ /thanh-vien/$1/ permanent;
     rewrite ^/blog/cac-truong-hop-su-dung-quyen-lien-quan-khong-phai-xin-phep-khong-phai-tra-tien-nhuan-but-thu-lao/?$ /blog/cac-truong-hop-su-dung-quyen-lien-quan-khong-xin-phep/ permanent;
 
-    # Định tuyến thư mục tĩnh Next.js SSG
+    # Định tuyến thư mục tĩnh Next.js SSG + Fallback bài viết động sang 404.html
     location / {
-        try_files $uri $uri/ $uri/index.html =404;
+        try_files $uri $uri/ $uri/index.html /404.html;
     }
 
     # Cache tài nguyên tĩnh (images, fonts, css, js)
