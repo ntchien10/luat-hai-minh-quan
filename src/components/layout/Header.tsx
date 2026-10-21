@@ -312,15 +312,6 @@ export const Header: React.FC = () => {
             >
               Liên hệ
             </Link>
-
-            {/* Đăng nhập */}
-            <Link
-              href="/admin/"
-              className="px-3 py-2 font-serif text-[15px] border-b-2 border-transparent text-[#1A1816] hover:text-[#96794F] transition-colors flex items-center gap-1.5"
-            >
-              <LogIn className="w-4 h-4 text-[#96794F]" />
-              <span>Đăng nhập</span>
-            </Link>
           </nav>
 
           {/* Right Header items: Search icon & Login Button */}
@@ -338,9 +329,9 @@ export const Header: React.FC = () => {
 
             <Link
               href="/admin/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#0F1E36] hover:bg-[#162a4d] text-[#E5B869] hover:text-white text-xs font-bold tracking-wide uppercase shadow-sm border border-[#96794F]/40 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-6 py-2.5 rounded-full bg-gradient-to-r from-[#DFBA73] via-[#C5A059] to-[#96794F] hover:brightness-110 active:scale-95 text-[#14130F] text-xs font-bold uppercase tracking-wider shadow-md transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer"
             >
-              <LogIn className="w-3.5 h-3.5 text-[#96794F]" />
+              <LogIn className="w-3.5 h-3.5 text-[#14130F]" />
               <span>Đăng nhập</span>
             </Link>
           </div>
@@ -349,11 +340,11 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-2 lg:hidden">
             <Link
               href="/admin/"
-              className="p-2 rounded-full bg-[#0F1E36] text-[#E5B869] border border-[#96794F]/30"
+              className="p-2 rounded-full bg-gradient-to-r from-[#DFBA73] via-[#C5A059] to-[#96794F] text-[#14130F] shadow-sm hover:brightness-110 active:scale-95 transition-all"
               aria-label="Đăng nhập quản trị"
               title="Đăng nhập quản trị"
             >
-              <LogIn className="w-4 h-4" />
+              <LogIn className="w-4 h-4 text-[#14130F]" />
             </Link>
             <button
               onClick={() => {
@@ -621,13 +612,13 @@ export const Header: React.FC = () => {
             Liên hệ
           </Link>
 
-          <div className="pt-2">
+          <div className="pt-3 border-t border-slate-100">
             <Link
               href="/admin/"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-[#0F1E36] text-[#E5B869] font-serif text-sm font-bold shadow-sm border border-[#96794F]/40"
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-full bg-gradient-to-r from-[#DFBA73] via-[#C5A059] to-[#96794F] hover:brightness-110 active:scale-95 text-[#14130F] text-xs font-bold uppercase tracking-wider shadow-md transition-all transform hover:-translate-y-0.5 cursor-pointer"
             >
-              <LogIn className="w-4 h-4 text-[#96794F]" />
+              <LogIn className="w-4 h-4 text-[#14130F]" />
               <span>Đăng nhập Quản trị</span>
             </Link>
           </div>
