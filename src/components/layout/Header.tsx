@@ -322,10 +322,10 @@ export const Header: React.FC = () => {
 
   return (
     <>
-      {/* TOPBAR (Thanh thông tin đầu trang - Dark Forest Green #0E3A24 chuẩn thương hiệu - Cuộn tự nhiên theo trang, KHÔNG CỐ ĐỊNH) */}
+      {/* TOPBAR (Thanh thông tin đầu trang - Xanh Navy #0F1E36 đồng bộ website - Cuộn tự nhiên theo trang, KHÔNG CỐ ĐỊNH) */}
       <div
         id="topbar-info"
-        className="w-full bg-[#0E3A24] text-white text-xs font-medium py-2 border-b border-white/10 shadow-xs relative z-30"
+        className="w-full bg-[#0F1E36] text-white text-xs font-medium py-2 border-b border-[#96794F]/25 shadow-xs relative z-30"
       >
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Bên trái: Địa chỉ (Hyperlink Google Maps) | Email | Hotline */}
