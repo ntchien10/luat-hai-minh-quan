@@ -27,6 +27,7 @@ export default function AdminDashboardPage() {
   const [articles, setArticles] = useState<DbArticle[]>([]);
   const [members, setMembers] = useState<DbTeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string>("admin");
   const [systemStatus, setSystemStatus] = useState<{
     database?: string;
     uploads_writable?: boolean;
@@ -52,6 +53,11 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const session = localStorage.getItem("hmq_admin_session") || "";
+      const role = localStorage.getItem("hmq_admin_role") || (session === "admin" ? "admin" : "editor");
+      setUserRole(role);
+    }
     loadData();
   }, [loadData]);
 
@@ -86,13 +92,15 @@ export default function AdminDashboardPage() {
               Viết bài mới
             </Link>
 
-            <Link
-              href="/admin/team/"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg border border-white/20 transition-colors"
-            >
-              <Users className="w-4 h-4" />
-              Quản lý đội ngũ
-            </Link>
+            {userRole === "admin" && (
+              <Link
+                href="/admin/team/"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg border border-white/20 transition-colors"
+              >
+                <Users className="w-4 h-4" />
+                Quản lý đội ngũ
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -269,13 +277,15 @@ export default function AdminDashboardPage() {
                 Quản lý hồ sơ và trạng thái hiển thị
               </p>
             </div>
-            <Link
-              href="/admin/team/"
-              className="text-xs text-[#96794F] hover:text-[#7d633e] font-semibold flex items-center gap-1"
-            >
-              Xem tất cả ({totalMembers})
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            {userRole === "admin" && (
+              <Link
+                href="/admin/team/"
+                className="text-xs text-[#96794F] hover:text-[#7d633e] font-semibold flex items-center gap-1"
+              >
+                Xem tất cả ({totalMembers})
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
           </div>
 
           <div className="divide-y divide-slate-100">

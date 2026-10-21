@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Search,
@@ -13,6 +14,7 @@ import {
   Loader2,
   User,
   Shield,
+  ShieldAlert,
   AlertCircle,
   ToggleLeft,
   ToggleRight,
@@ -42,6 +44,9 @@ function slugify(text: string): string {
 }
 
 export default function TeamAdminPage() {
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCheckingRole, setIsCheckingRole] = useState(true);
   const [members, setMembers] = useState<DbTeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -104,9 +109,53 @@ export default function TeamAdminPage() {
     setIsLoading(false);
   }, []);
 
+  // Kiểm tra quyền: Chỉ duy nhất tài khoản admin mới có quyền truy cập
   useEffect(() => {
-    loadMembers();
-  }, [loadMembers]);
+    if (typeof window !== "undefined") {
+      const session = localStorage.getItem("hmq_admin_session") || "";
+      const role = localStorage.getItem("hmq_admin_role") || (session === "admin" ? "admin" : "editor");
+      if (role !== "admin") {
+        setIsAdmin(false);
+        setIsCheckingRole(false);
+        router.replace("/admin/");
+        return;
+      }
+      setIsAdmin(true);
+      setIsCheckingRole(false);
+      loadMembers();
+    }
+  }, [router, loadMembers]);
+
+  if (isCheckingRole) {
+    return (
+      <div className="py-20 flex flex-col items-center justify-center text-slate-500">
+        <Loader2 className="w-8 h-8 animate-spin text-[#96794F] mb-3" />
+        <p className="text-xs font-semibold">Đang xác thực quyền quản trị...</p>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="bg-white rounded-2xl border border-red-200 p-8 sm:p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+        <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+          <ShieldAlert className="w-7 h-7" />
+        </div>
+        <h2 className="font-serif text-xl font-bold text-slate-900 mb-2">
+          Không Có Quyền Truy Cập
+        </h2>
+        <p className="text-xs text-slate-600 mb-6 leading-relaxed">
+          Chức năng <strong>Quản lý thành viên</strong> (luật sư &amp; nhân sự) chỉ dành riêng cho tài khoản Quản trị viên (Admin). Bạn không có quyền truy cập vào danh mục này.
+        </p>
+        <Link
+          href="/admin/"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow"
+        >
+          Quay Về Trang Tổng Quan
+        </Link>
+      </div>
+    );
+  }
 
   const openCreateModal = () => {
     setIsEditing(false);

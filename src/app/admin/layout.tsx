@@ -11,6 +11,7 @@ import {
   LogOut,
   ExternalLink,
   ShieldCheck,
+  ShieldAlert,
   Menu,
   X,
   UserCog,
@@ -46,9 +47,17 @@ export default function AdminLayout({
       const name = typeof window !== "undefined" ? localStorage.getItem("hmq_admin_name") : null;
 
       if (session) {
+        const resolvedRole = role || (session === "admin" ? "admin" : "editor");
         setUserEmail(session);
-        setUserRole(role || (session === "admin" ? "admin" : "editor"));
+        setUserRole(resolvedRole);
         setUserName(name || session);
+
+        // Chặn quyền vào Quản lý thành viên nếu không phải admin
+        if (pathname.startsWith("/admin/team") && resolvedRole !== "admin") {
+          router.replace("/admin/");
+          return;
+        }
+
         setIsLoading(false);
         return;
       }
@@ -94,32 +103,42 @@ export default function AdminLayout({
     );
   }
 
-  const navLinks = [
+  const allNavLinks = [
     {
       label: "Tổng quan",
       href: "/admin/",
       icon: LayoutDashboard,
       active: pathname === "/admin" || pathname === "/admin/",
+      adminOnly: false,
     },
     {
       label: "Quản lý bài viết",
       href: "/admin/articles/",
       icon: FileText,
       active: pathname.startsWith("/admin/articles"),
+      adminOnly: false,
     },
     {
       label: "Quản lý thành viên",
       href: "/admin/team/",
       icon: Users,
       active: pathname.startsWith("/admin/team"),
+      adminOnly: true,
     },
     {
       label: "Quản lý tài khoản",
       href: "/admin/users/",
       icon: UserCog,
       active: pathname.startsWith("/admin/users") || pathname.startsWith("/admin/setup"),
+      adminOnly: false,
     },
   ];
+
+  // Quyền khác admin sẽ bị ẩn mục Quản lý thành viên khỏi danh mục
+  const navLinks = allNavLinks.filter((item) => !item.adminOnly || userRole === "admin");
+
+  // Kiểm tra nếu đang ở trang team mà không phải admin thì chặn hiển thị
+  const isDeniedTeamAccess = pathname.startsWith("/admin/team") && userRole !== "admin";
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
@@ -257,7 +276,29 @@ export default function AdminLayout({
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0">
+          {isDeniedTeamAccess ? (
+            <div className="bg-white rounded-2xl border border-red-200 p-8 sm:p-12 text-center max-w-lg mx-auto my-12 shadow-sm">
+              <div className="w-14 h-14 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4">
+                <ShieldAlert className="w-7 h-7" />
+              </div>
+              <h2 className="font-serif text-xl font-bold text-slate-900 mb-2">
+                Không Có Quyền Truy Cập
+              </h2>
+              <p className="text-xs text-slate-600 mb-6 leading-relaxed">
+                Chức năng <strong>Quản lý thành viên</strong> (luật sư &amp; nhân sự) chỉ dành riêng cho tài khoản Quản trị viên (Admin). Bạn không có quyền truy cập vào danh mục này.
+              </p>
+              <Link
+                href="/admin/"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow"
+              >
+                Quay Về Trang Tổng Quan
+              </Link>
+            </div>
+          ) : (
+            children
+          )}
+        </main>
       </div>
     </div>
   );
