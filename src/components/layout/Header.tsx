@@ -234,6 +234,51 @@ export const Header: React.FC = () => {
     }
   };
 
+  // Bảo vệ tên riêng thương hiệu khỏi bị Google Translate dịch sai thành NAVY MINH
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const protectElements = () => {
+      document.querySelectorAll<HTMLElement>("h1, h2, h3, h4, h5, h6, span, p, a, div, strong, b").forEach((el) => {
+        if (el.children.length === 0 && el.textContent) {
+          const t = el.textContent.trim();
+          if (
+            t === "HẢI MINH QUÂN" ||
+            t === "Hải Minh Quân" ||
+            t === "LUẬT HẢI MINH QUÂN" ||
+            t === "Luật Hải Minh Quân" ||
+            t === "CÔNG TY LUẬT TNHH HẢI MINH QUÂN" ||
+            t === "Công ty Luật TNHH Hải Minh Quân" ||
+            t === "Đỗ Thị Thanh Hải" ||
+            t === "Ls. Đỗ Thị Thanh Hải"
+          ) {
+            el.classList.add("notranslate");
+            el.setAttribute("translate", "no");
+          }
+          if (/NAVY\s*MINH/i.test(t)) {
+            el.textContent = t.replace(/NAVY\s*MINH\s*QUAN/gi, "HẢI MINH QUÂN").replace(/NAVY\s*MINH/gi, "HẢI MINH QUÂN");
+            el.classList.add("notranslate");
+            el.setAttribute("translate", "no");
+          }
+        }
+      });
+    };
+
+    protectElements();
+
+    const observer = new MutationObserver(() => {
+      protectElements();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     // Tải Google Translate script an toàn
     if (typeof window !== "undefined" && !document.getElementById("google-translate-script")) {
@@ -465,10 +510,16 @@ export const Header: React.FC = () => {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-serif text-lg sm:text-xl font-bold tracking-wider text-[#1A1816] uppercase leading-tight group-hover:text-[#96794F] transition-colors">
+              <span
+                translate="no"
+                className="notranslate font-serif text-lg sm:text-xl font-bold tracking-wider text-[#1A1816] uppercase leading-tight group-hover:text-[#96794F] transition-colors"
+              >
                 HẢI MINH QUÂN
               </span>
-              <span className="text-[10px] sm:text-[11px] font-semibold tracking-widest text-[#96794F] uppercase">
+              <span
+                translate="no"
+                className="notranslate text-[10px] sm:text-[11px] font-semibold tracking-widest text-[#96794F] uppercase"
+              >
                 CÔNG TY LUẬT TNHH
               </span>
             </div>

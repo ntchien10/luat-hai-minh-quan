@@ -181,7 +181,9 @@ export function BlogPostLiveDetail({ slug }: Props) {
                     unoptimized
                   />
                   <div className="absolute bottom-0 inset-x-0 bg-gradient-to-r from-[#DFBA73] via-[#C5A059] to-[#96794F] py-2 px-4 flex items-center justify-between text-xs text-[#14130F]">
-                    <span className="font-bold tracking-wider">CÔNG TY LUẬT TNHH HẢI MINH QUÂN</span>
+                    <span translate="no" className="notranslate font-bold tracking-wider">
+                      CÔNG TY LUẬT TNHH HẢI MINH QUÂN
+                    </span>
                     <span className="italic font-medium text-slate-800">Điểm tựa pháp lý vững chắc</span>
                   </div>
                 </div>

@@ -70,7 +70,10 @@ export const HeroSection: React.FC = () => {
                   }}
                   className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-[44px] xl:text-[50px] font-bold text-white leading-[1.22] tracking-tight"
                 >
-                  <span className="block text-xs sm:text-sm font-sans font-semibold tracking-widest text-[#D4AF37] uppercase mb-1.5 sm:mb-2">
+                  <span
+                    translate="no"
+                    className="notranslate block text-xs sm:text-sm font-sans font-semibold tracking-widest text-[#D4AF37] uppercase mb-1.5 sm:mb-2"
+                  >
                     CÔNG TY LUẬT TNHH HẢI MINH QUÂN
                   </span>
                   Luật Sư Tư Vấn Pháp Lý <br />

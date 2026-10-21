@@ -40,10 +40,16 @@ export const Footer: React.FC = () => {
                 />
               </div>
               <div>
-                <span className="block font-serif text-[11px] font-semibold text-[#D4AF37] tracking-widest uppercase">
+                <span
+                  translate="no"
+                  className="notranslate block font-serif text-[11px] font-semibold text-[#D4AF37] tracking-widest uppercase"
+                >
                   CÔNG TY LUẬT TNHH
                 </span>
-                <span className="block font-serif text-xl font-bold text-white tracking-wider group-hover:text-[#D4AF37] transition-colors">
+                <span
+                  translate="no"
+                  className="notranslate block font-serif text-xl font-bold text-white tracking-wider group-hover:text-[#D4AF37] transition-colors"
+                >
                   HẢI MINH QUÂN
                 </span>
                 <span className="block text-[11px] text-slate-400 tracking-wider">
