@@ -10,13 +10,16 @@ export const BlogSidebar: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const categories = [
-    { name: "Tất cả bài viết", count: 50, href: "/blog/" },
-    { name: "Tố tụng dân sự & Đất đai", count: 17, href: "/service/to-tung-dan-su/" },
-    { name: "Tố tụng hình sự", count: 8, href: "/service/to-tung-hinh-su/" },
-    { name: "Luật sư doanh nghiệp", count: 12, href: "/service/luat-su-doanh-nghiep/" },
-    { name: "Sở hữu trí tuệ", count: 9, href: "/service/so-huu-tri-tue/" },
-    { name: "Tư vấn đầu tư FDI", count: 6, href: "/service/tu-van-dau-tu/" },
-    { name: "Tư vấn kế toán thuế", count: 5, href: "/service/tu-van-ke-toan-thue/" },
+    { name: "Tất cả bài viết", count: usefulArticles.length, href: "/blog/" },
+    { name: "Luật sở hữu trí tuệ", count: usefulArticles.filter(a => a.serviceSlug === "luat-so-huu-tri-tue").length, href: "/service/luat-so-huu-tri-tue/" },
+    { name: "Luật doanh nghiệp", count: usefulArticles.filter(a => a.serviceSlug === "luat-doanh-nghiep").length, href: "/service/luat-doanh-nghiep/" },
+    { name: "Luật hôn nhân & gia đình", count: usefulArticles.filter(a => a.serviceSlug === "luat-hon-nhan-va-gia-dinh").length, href: "/service/luat-hon-nhan-va-gia-dinh/" },
+    { name: "Luật dân sự", count: usefulArticles.filter(a => a.serviceSlug === "luat-dan-su").length, href: "/service/luat-dan-su/" },
+    { name: "Luật đất đai", count: usefulArticles.filter(a => a.serviceSlug === "luat-dat-dai").length, href: "/service/luat-dat-dai/" },
+    { name: "Luật hình sự", count: usefulArticles.filter(a => a.serviceSlug === "luat-hinh-su").length, href: "/service/luat-hinh-su/" },
+    { name: "Luật hành chính", count: usefulArticles.filter(a => a.serviceSlug === "luat-hanh-chinh").length, href: "/service/luat-hanh-chinh/" },
+    { name: "Luật đầu tư", count: usefulArticles.filter(a => a.serviceSlug === "luat-dau-tu").length, href: "/service/luat-dau-tu/" },
+    { name: "Dịch vụ khác", count: usefulArticles.filter(a => a.serviceSlug === "dich-vu-khac").length, href: "/service/dich-vu-khac/" },
   ];
 
   return (

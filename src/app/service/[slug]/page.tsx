@@ -16,10 +16,23 @@ import { Footer } from "@/components/layout/Footer";
 import { FloatingContact } from "@/components/ui/FloatingContact";
 import { practiceServices, allNavigationServices, firmInfo, usefulArticles } from "@/data/mockData";
 
+// Ánh xạ tương thích ngược các slug cũ để không bao giờ bị lỗi 404
+const SLUG_ALIASES: Record<string, string> = {
+  "to-tung-dan-su": "luat-dan-su",
+  "to-tung-hinh-su": "luat-hinh-su",
+  "to-tung-hanh-chinh": "luat-hanh-chinh",
+  "so-huu-tri-tue": "luat-so-huu-tri-tue",
+  "luat-su-doanh-nghiep": "luat-doanh-nghiep",
+  "tu-van-luat-doanh-nghiep": "luat-doanh-nghiep",
+  "tu-van-dau-tu": "luat-dau-tu",
+  "tu-van-ke-toan-thue": "dich-vu-khac",
+  "cac-dich-vu-khac": "dich-vu-khac",
+};
+
 export async function generateStaticParams() {
-  return practiceServices.map((service) => ({
-    slug: service.slug,
-  }));
+  const primarySlugs = practiceServices.map((service) => ({ slug: service.slug }));
+  const aliasSlugs = Object.keys(SLUG_ALIASES).map((slug) => ({ slug }));
+  return [...primarySlugs, ...aliasSlugs];
 }
 
 import { BreadcrumbSchema } from "@/components/seo/JsonLd";
@@ -30,7 +43,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const service = practiceServices.find((s) => s.slug === slug);
+  const resolvedSlug = SLUG_ALIASES[slug] || slug;
+  const service = practiceServices.find((s) => s.slug === resolvedSlug || s.slug === slug);
   if (!service) return { title: "Dịch vụ pháp lý - Công ty Luật TNHH Hải Minh Quân" };
 
   const image = service.hoverImage || "/images/about/about-court.jpg";
@@ -79,33 +93,82 @@ const serviceWhyChooseMap: Record<
     commitment: string;
   }
 > = {
-  "tu-van-luat-doanh-nghiep": {
+  "luat-dan-su": {
     benefits: [
-      "Đội ngũ luật sư có hơn 10 năm kinh nghiệm đồng hành cùng các tập đoàn lớn",
-      "Giải pháp tư vấn sát với thực tiễn kinh doanh, không lý thuyết suông",
-      "Bảo mật tuyệt đối thông tin tài chính, chiến lược của doanh nghiệp",
+      "Kinh nghiệm dày dặn trong việc xử lý các tranh chấp hợp đồng, tài sản và thừa kế phức tạp",
+      "Luôn ưu tiên giải pháp hòa giải để tiết kiệm tối đa thời gian và chi phí cho khách hàng",
+      "Theo sát vụ việc đến cùng cho tới khi bản án hoặc quyết định có hiệu lực thi hành",
     ],
-    commitment: "Cam kết đồng hành bảo vệ tối đa lợi ích hợp pháp của doanh nghiệp, biến pháp luật thành lá chắn vững chắc cho mọi hoạt động kinh doanh.",
+    commitment: "Tận tâm, kiên định bảo vệ quyền lợi chính đáng của thân chủ trên nền tảng thượng tôn pháp luật và công lý.",
   },
-  "thu-hoi-no": {
+  "luat-hinh-su": {
     benefits: [
-      "Tuân thủ pháp luật 100%, bảo vệ uy tín và danh dự cho khách hàng",
-      "Tối ưu chi phí, phí dịch vụ linh hoạt theo tỷ lệ thu hồi thành công",
-      "Tác phong quyết liệt, chuyên nghiệp và bảo mật thông tin tối đa",
+      "Phản ứng tức thì, có mặt tại các trại tạm giam, cơ quan điều tra trên toàn quốc",
+      "Am hiểu sâu sắc quy chuẩn tố tụng hình sự và tâm lý tội phạm",
+      "Bảo mật tuyệt đối danh tính và đời tư của thân chủ cùng gia đình",
     ],
-    commitment: "Không sử dụng biện pháp trái luật. Áp dụng toàn diện các đòn bẩy pháp lý để thu hồi tối đa công nợ trong thời gian ngắn nhất.",
+    commitment: "Tất cả vì sự thật khách quan và quyền con người. Kiên quyết chống oan sai và bảo đảm phán quyết công bằng.",
   },
-  "hop-dong": {
+  "luat-hanh-chinh": {
     benefits: [
-      "Ngôn từ pháp lý chuẩn xác, rõ ràng, không mập mờ tạo kẽ hở",
-      "Cân bằng hài hòa giữa việc bảo vệ lợi ích và việc giữ gìn mối quan hệ đối tác",
-      "Thời gian xử lý nhanh chóng, đáp ứng kịp thời tiến độ giao kết thương mại",
+      "Nắm vững hệ thống văn bản pháp luật hành chính và các quy định quản lý nhà nước",
+      "Kinh nghiệm xử lý các vụ việc khiếu kiện bồi thường đất đai, cưỡng chế phức tạp",
+      "Bản lĩnh vững vàng, kiên quyết bảo vệ lẽ phải trước cơ quan công quyền",
     ],
-    commitment: "Triệt tiêu rủi ro pháp lý từ khâu soạn thảo, đảm bảo hợp đồng có hiệu lực pháp lý cao nhất và dễ dàng thực thi.",
+    commitment: "Đảm bảo quyền bình đẳng trước pháp luật, yêu cầu hủy bỏ quyết định trái thẩm quyền và đòi bồi thường thỏa đáng.",
   },
+  "luat-dat-dai": {
+    benefits: [
+      "Nắm bắt cập nhật Luật Đất đai 2024 mới nhất, tháo gỡ điểm nghẽn về cấp Sổ đỏ lần đầu",
+      "Kinh nghiệm hòa giải và tranh tụng thực chiến giải quyết triệt để tranh chấp ranh giới, lối đi chung",
+      "Tối ưu mức bồi thường, hỗ trợ tái định cư khi nhà nước thu hồi đất sát với giá thị trường",
+    ],
+    commitment: "Bảo toàn tài sản đất đai quý giá của khách hàng, đem lại sự minh bạch, an tâm pháp lý trọn vẹn.",
+  },
+  "luat-hon-nhan-va-gia-dinh": {
+    benefits: [
+      "Giải quyết ly hôn thuận tình nhanh gọn 7 - 15 ngày, chỉ cần đến Tòa 01 lần duy nhất",
+      "Bảo vệ tối đa quyền nuôi con, quyền thăm nom và mức cấp dưỡng thỏa đáng",
+      "Phân chia tài sản chung vợ chồng và chứng minh tài sản riêng rõ ràng, chuẩn xác",
+    ],
+    commitment: "Bảo mật tuyệt đối thông tin riêng tư, ứng xử nhân văn, thấu cảm và bảo vệ tương lai con trẻ.",
+  },
+  "luat-so-huu-tri-tue": {
+    benefits: [
+      "Đội ngũ luật sư và chuyên gia sở hữu trí tuệ giàu kinh nghiệm xử lý hồ sơ nhãn hiệu phức tạp",
+      "Chiến lược bảo hộ toàn diện thương hiệu, logo, bao bì và phần mềm",
+      "Quyết liệt đại diện xử lý hành vi xâm phạm, làm nhái thương hiệu độc quyền",
+    ],
+    commitment: "Cam kết biến tài sản trí tuệ thành lợi thế cạnh tranh bền vững và độc quyền cho doanh nghiệp.",
+  },
+  "luat-doanh-nghiep": {
+    benefits: [
+      "Tối ưu chi phí so với việc duy trì phòng pháp chế nội bộ cồng kềnh",
+      "Giải pháp tư vấn thực tiễn, sắc bén, đồng hành cùng mục tiêu kinh doanh của doanh nghiệp",
+      "Bảo mật tuyệt đối toàn bộ thông tin tài chính và chiến lược kinh doanh",
+    ],
+    commitment: "Đồng hành sát cánh, bảo vệ tối đa lợi ích của doanh nghiệp trên con đường phát triển bền vững.",
+  },
+  "luat-dau-tu": {
+    benefits: [
+      "Tỷ lệ hồ sơ cấp Giấy chứng nhận đầu tư IRC thành công nhanh chóng, chuẩn xác quy định pháp luật",
+      "Bảo vệ tối đa quyền lợi của nhà đầu tư trước các biến động chính sách và rủi ro tranh chấp",
+      "Hỗ trợ song ngữ chuyên nghiệp, am hiểu sâu sắc thực tiễn đầu tư FDI tại Việt Nam",
+    ],
+    commitment: "Cam kết đồng hành tận tâm, bảo đảm mọi thủ tục đầu tư diễn ra an toàn, đúng tiến độ và tối ưu chi phí.",
+  },
+  "dich-vu-khac": {
+    benefits: [
+      "Thủ tục trọn gói, nhanh gọn, tiết kiệm tối đa thời gian và chi phí đi lại cho khách hàng",
+      "Hỗ trợ chuyên gia nước ngoài trọn gói Work Permit, thẻ tạm trú và thủ tục mã số mã vạch",
+      "Đội ngũ chuyên viên chuyên nghiệp, nhiệt tình, bảo mật thông tin tuyệt đối",
+    ],
+    commitment: "Tận tâm phục vụ, lấy sự hài lòng và an toàn pháp lý của khách hàng làm thước đo thành công.",
+  },
+  // Giữ lại các key cũ cho tương thích
   "to-tung-dan-su": {
     benefits: [
-      "Kinh nghiệm dày dặn trong việc xử lý các vụ án đất đai, thừa kế và hôn nhân gia đình phức tạp",
+      "Kinh nghiệm dày dặn trong việc xử lý các vụ án đất đai, thừa kế và tranh chấp hợp đồng",
       "Luôn ưu tiên giải pháp hòa giải để tiết kiệm tối đa thời gian và chi phí cho khách hàng",
       "Theo sát vụ việc đến cùng cho tới khi bản án hoặc quyết định có hiệu lực thi hành",
     ],
@@ -125,31 +188,7 @@ const serviceWhyChooseMap: Record<
       "Kinh nghiệm xử lý các vụ việc tranh chấp bồi thường đất đai phức tạp",
       "Bản lĩnh vững vàng, kiên quyết bảo vệ lẽ phải trước cơ quan công quyền",
     ],
-    commitment: "Đảm bảo quyền bình đẳng trước pháp luật, buộc cơ quan nhà nước thực thi đúng thẩm quyền và bồi thường thiệt hại do quyết định trái luật gây ra.",
-  },
-  "luat-su-rieng": {
-    benefits: [
-      "Sự tận tâm, đồng hành kín đáo và bảo mật thông tin gia đình tuyệt đối",
-      "Thời gian phục vụ linh hoạt 24/7, luôn có mặt khi thân chủ cần",
-      "Giúp thân chủ tự tin đưa ra các quyết định đầu tư và kinh doanh an toàn",
-    ],
-    commitment: "Luôn đặt lợi ích, danh dự và sự an toàn pháp lý của thân chủ cùng gia đình lên hàng đầu trong mọi tình huống.",
-  },
-  "dai-dien-ngoai-to-tung": {
-    benefits: [
-      "Tiết kiệm tối đa thời gian và công sức đi lại cho khách hàng",
-      "Tận dụng kinh nghiệm đàm phán sắc bén của Luật sư để đạt lợi ích cao nhất",
-      "Giữ gìn mối quan hệ làm ăn tốt đẹp giữa các bên, tránh đối đầu tại Tòa án",
-    ],
-    commitment: "Thực hiện đúng phạm vi ủy quyền, bảo mật thông tin và luôn nỗ lực vì lợi ích cao nhất của khách hàng.",
-  },
-  "cac-dich-vu-khac": {
-    benefits: [
-      "Dịch vụ trọn gói, thủ tục nhanh gọn, không phát sinh chi phí ẩn",
-      "Tỷ lệ hồ sơ được phê duyệt thành công ngay từ lần đầu tiên đạt trên 98%",
-      "Đội ngũ chuyên viên chuyên nghiệp, nhiệt tình và chu đáo",
-    ],
-    commitment: "Cam kết hoàn thành công việc đúng tiến độ đã thỏa thuận, mang lại sự thuận tiện và an tâm tuyệt đối.",
+    commitment: "Đảm bảo quyền bình đẳng trước pháp luật, buộc cơ quan nhà nước thực thi đúng thẩm quyền.",
   },
   "tu-van-dau-tu": {
     benefits: [
@@ -157,7 +196,7 @@ const serviceWhyChooseMap: Record<
       "Bảo vệ tối đa quyền lợi của nhà đầu tư trước các biến động chính sách và rủi ro tranh chấp",
       "Hỗ trợ song ngữ chuyên nghiệp, am hiểu sâu sắc thực tiễn đầu tư tại Việt Nam",
     ],
-    commitment: "Cam kết đồng hành tận tâm, bảo đảm mọi thủ tục đầu tư diễn ra an toàn, đúng tiến độ và tối ưu hóa chi phí cho nhà đầu tư.",
+    commitment: "Cam kết đồng hành tận tâm, bảo đảm mọi thủ tục đầu tư diễn ra an toàn, đúng tiến độ.",
   },
   "so-huu-tri-tue": {
     benefits: [
@@ -178,18 +217,10 @@ const serviceWhyChooseMap: Record<
   "tu-van-ke-toan-thue": {
     benefits: [
       "Tránh các khoản phạt chậm nộp và truy thu thuế tiền tỷ do thiếu hiểu biết quy định",
-      "Số liệu tài chính minh bạch, sẵn sàng cho việc huy động vốn, đấu thầu dự án hoặc gọi vốn đầu tư",
+      "Số liệu tài chính minh bạch, sẵn sàng cho việc huy động vốn hoặc đấu thầu",
       "Đội ngũ chuyên gia thuế có hơn 15 năm kinh nghiệm thực chiến đa ngành nghề",
     ],
     commitment: "Bảo đảm tính tuân thủ pháp luật cao nhất, bảo vệ quyền và lợi ích hợp pháp của người nộp thuế.",
-  },
-  "dich-vu-khac": {
-    benefits: [
-      "Thủ tục trọn gói, nhanh gọn, tiết kiệm tối đa thời gian và chi phí đi lại cho khách hàng",
-      "Tận tâm, chu đáo, bảo mật thông tin tuyệt đối trong mọi vụ việc",
-      "Hỗ trợ khách hàng trên toàn quốc và người Việt Nam định cư ở nước ngoài",
-    ],
-    commitment: "Tận tâm phục vụ, lấy sự hài lòng và an toàn pháp lý của khách hàng làm thước đo thành công.",
   },
 };
 
@@ -216,7 +247,8 @@ export default async function ServiceDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const service = practiceServices.find((s) => s.slug === slug);
+  const resolvedSlug = SLUG_ALIASES[slug] || slug;
+  const service = practiceServices.find((s) => s.slug === resolvedSlug || s.slug === slug);
 
   if (!service) {
     notFound();
@@ -228,7 +260,7 @@ export default async function ServiceDetailPage({
   const displayArticles =
     serviceArticles.length > 0 ? serviceArticles : usefulArticles.slice(0, 3);
 
-  const whyChoose = serviceWhyChooseMap[slug] || {
+  const whyChoose = serviceWhyChooseMap[service.slug] || serviceWhyChooseMap[slug] || {
     benefits: [
       "Đội ngũ luật sư giỏi, tận tâm, giàu kinh nghiệm thực chiến",
       "Giải pháp pháp lý bảo mật, an toàn và tối ưu chi phí",

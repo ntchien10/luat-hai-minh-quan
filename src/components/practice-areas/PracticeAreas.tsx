@@ -6,16 +6,16 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Briefcase,
-  UserCheck,
   FileCheck,
   Scale,
   ShieldAlert,
   Building2,
-  Coins,
   HeartHandshake,
   Award,
   TrendingUp,
   Calculator,
+  MapPin,
+  Users,
 } from "lucide-react";
 import { practiceServices } from "@/data/mockData";
 import { formatAmpersand } from "@/components/ui/Ampersand";
@@ -30,6 +30,10 @@ export const PracticeAreas: React.FC = () => {
         return <ShieldAlert className={iconClass} strokeWidth={1.5} />;
       case "Building2":
         return <Building2 className={iconClass} strokeWidth={1.5} />;
+      case "MapPin":
+        return <MapPin className={iconClass} strokeWidth={1.5} />;
+      case "Users":
+        return <Users className={iconClass} strokeWidth={1.5} />;
       case "TrendingUp":
         return <TrendingUp className={iconClass} strokeWidth={1.5} />;
       case "Award":
@@ -38,6 +42,8 @@ export const PracticeAreas: React.FC = () => {
         return <Briefcase className={iconClass} strokeWidth={1.5} />;
       case "Calculator":
         return <Calculator className={iconClass} strokeWidth={1.5} />;
+      case "FileCheck":
+        return <FileCheck className={iconClass} strokeWidth={1.5} />;
       case "HeartHandshake":
         return <HeartHandshake className={iconClass} strokeWidth={1.5} />;
       default:
@@ -66,8 +72,8 @@ export const PracticeAreas: React.FC = () => {
           </div>
         </motion.div>
 
-        {/* 8 Services Grid: 2 rows of 4 cards on desktop */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 lg:gap-4">
+        {/* 9 Services Grid: 3 rows of 3 cards on desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">
           {practiceServices.map((service, idx) => (
             <motion.div
               key={service.id}
@@ -76,10 +82,10 @@ export const PracticeAreas: React.FC = () => {
               viewport={{ once: true, amount: 0.15 }}
               transition={{
                 duration: 0.45,
-                delay: (idx % 4) * 0.08,
+                delay: (idx % 3) * 0.08,
                 ease: [0.16, 1, 0.3, 1],
               }}
-              className="group relative overflow-hidden min-h-[165px] sm:min-h-[175px] lg:min-h-[180px] flex flex-col justify-center"
+              className="group relative overflow-hidden min-h-[170px] sm:min-h-[180px] lg:min-h-[185px] flex flex-col justify-center"
             >
               {/* Default State: Dashed border container matching .grid-item-holder */}
               <div className="w-full h-full border-2 border-dashed border-[#DFBA73]/50 group-hover:border-[#96794F] p-3.5 sm:p-4 text-center flex flex-col items-center justify-center transition-all duration-300 group-hover:opacity-0 bg-[#FCFBF8]">
