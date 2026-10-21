@@ -126,7 +126,7 @@ export default function AdminLayout({
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
       {/* Top Navigation Bar */}
       <header className="bg-[#0F1E36] text-white sticky top-0 z-50 border-b border-[#96794F]/30 shadow-md">
-        <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -136,22 +136,22 @@ export default function AdminLayout({
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
-            <Link href="/admin/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-lg bg-white/10 p-1 border border-[#96794F]/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-sm">
+            <Link href="/admin/" className="flex items-center gap-3.5 group">
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-white/10 p-1.5 border border-[#96794F]/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-md">
                 <Image
                   src="/images/logo.png"
                   alt="Công ty Luật TNHH Hải Minh Quân"
-                  width={40}
-                  height={40}
+                  width={64}
+                  height={64}
                   priority
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain drop-shadow"
                 />
               </div>
               <div>
-                <span className="font-serif font-bold text-base sm:text-lg tracking-wide text-white block leading-tight group-hover:text-[#E5B869] transition-colors">
+                <span className="font-serif font-bold text-lg sm:text-xl tracking-wide text-white block leading-tight group-hover:text-[#E5B869] transition-colors">
                   HẢI MINH QUÂN
                 </span>
-                <span className="text-[10px] text-[#96794F] font-semibold tracking-wider uppercase block">
+                <span className="text-[11px] sm:text-xs text-[#E5B869] font-semibold tracking-wider uppercase block">
                   Hệ Thống Quản Trị CMS
                 </span>
               </div>

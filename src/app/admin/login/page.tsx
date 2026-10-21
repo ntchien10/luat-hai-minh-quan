@@ -51,18 +51,18 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md bg-[#0F1E36]/90 backdrop-blur-md border border-[#96794F]/30 rounded-xl shadow-2xl p-6 sm:p-8 relative z-10">
         {/* Brand Header */}
         <div className="text-center mb-6">
-          <div className="w-16 h-16 rounded-2xl bg-white/10 p-2 border border-[#96794F]/40 flex items-center justify-center mx-auto mb-4 shadow-xl shadow-[#96794F]/10">
+          <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-white/10 p-3 border border-[#96794F]/40 flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-[#96794F]/20 backdrop-blur-sm">
             <Image
               src="/images/logo.png"
               alt="Công ty Luật TNHH Hải Minh Quân"
-              width={56}
-              height={56}
+              width={120}
+              height={120}
               priority
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain drop-shadow-md"
             />
           </div>
           <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-wide text-white">
-            CÔNG TY LUẬT HẢI MINH QUÂN
+            LUẬT HẢI MINH QUÂN
           </h1>
           <p className="text-xs uppercase tracking-widest text-[#96794F] font-semibold mt-1">
             Hệ Thống Quản Trị Nội Dung (CMS)
