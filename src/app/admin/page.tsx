@@ -8,7 +8,6 @@ import {
   Users,
   PlusCircle,
   ArrowRight,
-  RefreshCw,
   Sparkles,
   Eye,
   Server,
@@ -17,7 +16,6 @@ import {
 import {
   fetchArticles,
   fetchTeamMembers,
-  reseedDatabase,
   getSystemStatus,
   DbArticle,
   DbTeamMember,
@@ -29,8 +27,6 @@ export default function AdminDashboardPage() {
   const [articles, setArticles] = useState<DbArticle[]>([]);
   const [members, setMembers] = useState<DbTeamMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [seedResult, setSeedResult] = useState<string | null>(null);
   const [systemStatus, setSystemStatus] = useState<{
     database?: string;
     uploads_writable?: boolean;
@@ -58,31 +54,6 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
-
-  const handleSeedData = async () => {
-    if (
-      !confirm(
-        "Bạn có chắc muốn nạp lại toàn bộ 50 bài viết và danh sách luật sư ban đầu vào Database SQLite không?"
-      )
-    ) {
-      return;
-    }
-
-    setIsSeeding(true);
-    setSeedResult(null);
-
-    const res = await reseedDatabase();
-    setIsSeeding(false);
-
-    if (res.error) {
-      setSeedResult(`❌ ${res.error}`);
-    } else {
-      setSeedResult(
-        `✅ Đã nạp thành công ${res.articles_count ?? 50} bài viết và ${res.team_count ?? 6} thành viên vào Database!`
-      );
-      loadData();
-    }
-  };
 
   const totalArticles = articles.length > 0 ? articles.length : allArticlesData.length;
   const totalMembers = members.length > 0 ? members.length : allTeamMembersArchive.length;
@@ -122,23 +93,7 @@ export default function AdminDashboardPage() {
               <Users className="w-4 h-4" />
               Quản lý đội ngũ
             </Link>
-
-            <button
-              type="button"
-              onClick={handleSeedData}
-              disabled={isSeeding}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${isSeeding ? "animate-spin" : ""}`} />
-              {isSeeding ? "Đang nạp..." : "Nạp lại dữ liệu gốc"}
-            </button>
           </div>
-
-          {seedResult && (
-            <div className="mt-4 p-3 bg-black/40 rounded-lg text-xs font-medium border border-white/10">
-              {seedResult}
-            </div>
-          )}
         </div>
       </div>
 

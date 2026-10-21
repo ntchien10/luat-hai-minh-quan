@@ -14,7 +14,6 @@ import {
   Menu,
   X,
   UserCog,
-  Server,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -159,11 +158,6 @@ export default function AdminLayout({
           </div>
 
           <div className="flex items-center gap-3 sm:gap-4">
-            {/* Host SQLite status badge */}
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              <Server className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Hosting PHP &amp; SQLite (100% Free)</span>
-            </div>
 
             {/* Public site link */}
             <Link
@@ -208,11 +202,10 @@ export default function AdminLayout({
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-2.5 px-3 py-2 text-sm rounded font-medium ${
-                    item.active
+                  className={`flex items-center gap-2.5 px-3 py-2 text-sm rounded font-medium ${item.active
                       ? "bg-[#96794F] text-white"
                       : "text-slate-300 hover:bg-white/5"
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   {item.label}
@@ -237,16 +230,14 @@ export default function AdminLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${
-                    item.active
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${item.active
                       ? "bg-[#0F1E36] text-[#E5B869] shadow-sm font-semibold"
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
+                    }`}
                 >
                   <Icon
-                    className={`w-4 h-4 ${
-                      item.active ? "text-[#E5B869]" : "text-slate-400"
-                    }`}
+                    className={`w-4 h-4 ${item.active ? "text-[#E5B869]" : "text-slate-400"
+                      }`}
                   />
                   {item.label}
                 </Link>

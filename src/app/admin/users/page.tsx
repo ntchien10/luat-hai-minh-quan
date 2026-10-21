@@ -14,16 +14,13 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  RefreshCw,
   Server,
-  Database,
 } from "lucide-react";
 import {
   fetchAdminUsers,
   saveAdminUser,
   deleteAdminUser,
   changeAdminPassword,
-  reseedDatabase,
   getSystemStatus,
   AdminUser,
 } from "@/lib/api";
@@ -66,8 +63,6 @@ export default function UsersAdminPage() {
   });
 
   // Trạng thái hệ thống & sao lưu
-  const [isSeeding, setIsSeeding] = useState(false);
-  const [seedResult, setSeedResult] = useState<string | null>(null);
   const [systemInfo, setSystemInfo] = useState<{ database?: string; uploads_writable?: boolean }>({});
 
   const isAdmin = currentRole === "admin";
@@ -266,27 +261,6 @@ export default function UsersAdminPage() {
       text: `Đổi mật khẩu cho tài khoản "${targetPasswordUser.username}" thành công!`,
     });
     setTimeout(() => setActionMessage(null), 4000);
-  };
-
-  // Khôi phục dữ liệu mẫu
-  const handleSeedData = async () => {
-    if (!isAdmin) {
-      alert("Chỉ tài khoản Admin mới có quyền khôi phục dữ liệu mẫu!");
-      return;
-    }
-    if (!confirm("Thao tác này sẽ nạp lại toàn bộ 50 bài viết và 6 luật sư gốc vào Database SQLite. Tiếp tục?")) {
-      return;
-    }
-    setIsSeeding(true);
-    setSeedResult(null);
-    const res = await reseedDatabase();
-    setIsSeeding(false);
-    if (res.error) {
-      setSeedResult(`❌ Lỗi: ${res.error}`);
-    } else {
-      setSeedResult(`✅ Đã nạp thành công ${res.articles_count ?? 50} bài viết và ${res.team_count ?? 6} thành viên!`);
-      loadData();
-    }
   };
 
   return (
@@ -523,73 +497,33 @@ export default function UsersAdminPage() {
       </div>
 
       {/* Backup & System Status Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* System info */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm">
-          <h2 className="font-serif text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
-            <Server className="w-5 h-5 text-[#96794F]" />
-            Trạng Thái Cơ Sở Dữ Liệu Hosting
-          </h2>
-          <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-            Hệ thống quản trị và dữ liệu tài khoản được lưu trữ an toàn trong tệp SQLite nội bộ trên host của bạn.
-          </p>
+      <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm">
+        <h2 className="font-serif text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
+          <Server className="w-5 h-5 text-[#96794F]" />
+          Trạng Thái Cơ Sở Dữ Liệu Hosting
+        </h2>
+        <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+          Hệ thống quản trị và dữ liệu tài khoản được lưu trữ an toàn trong tệp SQLite nội bộ trên host của bạn.
+        </p>
 
-          <div className="space-y-2 text-xs">
-            <div className="p-3 bg-slate-50 rounded-lg flex items-center justify-between">
-              <span className="text-slate-500">Tệp SQLite:</span>
-              <span className="font-mono font-bold text-slate-800">
-                {systemInfo.database || "api/database.sqlite"}
-              </span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg flex items-center justify-between">
-              <span className="text-slate-500">Thư mục Uploads:</span>
-              <span className="font-semibold text-emerald-600">
-                {systemInfo.uploads_writable !== false ? "public_html/uploads/ (Quyền ghi 755)" : "Cần cấp quyền 755"}
-              </span>
-            </div>
-            <div className="p-3 bg-slate-50 rounded-lg flex items-center justify-between">
-              <span className="text-slate-500">Sao lưu dữ liệu:</span>
-              <span className="text-slate-700">
-                Chỉ cần tải file <code>database.sqlite</code> về máy là đã sao lưu 100%!
-              </span>
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-between">
+            <span className="text-slate-500 mb-1">Tệp SQLite:</span>
+            <span className="font-mono font-bold text-slate-800 break-all">
+              {systemInfo.database || "api/database.sqlite"}
+            </span>
           </div>
-        </div>
-
-        {/* 1-click restore (Admin only) */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6 shadow-sm flex flex-col justify-between">
-          <div>
-            <h2 className="font-serif text-base font-bold text-slate-900 flex items-center gap-2 mb-2">
-              <Database className="w-5 h-5 text-[#96794F]" />
-              Khởi Tạo / Khôi Phục Dữ Liệu Gốc (1-Click)
-            </h2>
-            <p className="text-xs text-slate-500 leading-relaxed mb-4">
-              Nạp lại 50 bài viết tư vấn pháp luật chuẩn xác và 6 luật sư mẫu vào file Database SQLite bất cứ khi nào cần.
-            </p>
+          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-between">
+            <span className="text-slate-500 mb-1">Thư mục Uploads:</span>
+            <span className="font-semibold text-emerald-600">
+              {systemInfo.uploads_writable !== false ? "public_html/uploads/ (Quyền 755)" : "Cần cấp quyền 755"}
+            </span>
           </div>
-
-          <div>
-            {isAdmin ? (
-              <button
-                type="button"
-                onClick={handleSeedData}
-                disabled={isSeeding}
-                className="w-full py-2.5 px-4 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs uppercase tracking-wider rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${isSeeding ? "animate-spin text-[#DFBA73]" : ""}`} />
-                {isSeeding ? "Đang nạp lại dữ liệu..." : "Nạp lại 50 bài viết & thành viên gốc"}
-              </button>
-            ) : (
-              <div className="p-3 bg-slate-100 text-slate-500 text-xs rounded-lg text-center font-medium">
-                Chỉ tài khoản Admin mới có quyền thực hiện khôi phục dữ liệu gốc
-              </div>
-            )}
-
-            {seedResult && (
-              <div className="mt-3 p-2.5 bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-800">
-                {seedResult}
-              </div>
-            )}
+          <div className="p-3 bg-slate-50 rounded-lg flex flex-col justify-between">
+            <span className="text-slate-500 mb-1">Sao lưu dữ liệu:</span>
+            <span className="text-slate-700">
+              Chỉ cần tải file <code>database.sqlite</code> về máy là đã sao lưu 100%!
+            </span>
           </div>
         </div>
       </div>
