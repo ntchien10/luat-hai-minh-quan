@@ -24,6 +24,7 @@ import {
 import { allArticlesData } from "@/data/articlesData";
 import { practiceServices } from "@/data/mockData";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 function slugify(text: string): string {
   return text
@@ -512,19 +513,17 @@ export default function ArticlesAdminPage() {
 
               {/* Content */}
               <div>
-                <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Nội dung chi tiết bài viết (Hỗ trợ định dạng xuống dòng, gạch đầu dòng, tiêu đề ##)
+                    Nội dung chi tiết bài viết (Giữ nguyên định dạng Word, Docs, In đậm, Danh sách, Tiêu đề)
                   </label>
                 </div>
-                <textarea
-                  rows={10}
+                <RichTextEditor
                   value={formData.content}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, content: e.target.value }))
+                  onChange={(val) =>
+                    setFormData((prev) => ({ ...prev, content: val }))
                   }
-                  placeholder="Nhập nội dung bài viết chi tiết tại đây... Có thể dùng ## Tiêu đề mục con, - Danh sách gạch đầu dòng."
-                  className="w-full px-3 py-2 text-xs font-sans border border-slate-300 rounded-lg focus:outline-none focus:border-[#96794F] leading-relaxed"
+                  placeholder="Dán nội dung từ Word, Docs hoặc soạn thảo trực tiếp tại đây..."
                 />
               </div>
 

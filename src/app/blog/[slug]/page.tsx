@@ -202,59 +202,66 @@ export default async function BlogPostDetailPage({
               {/* Article Detailed Body */}
               <div className="space-y-4 text-slate-700 text-[15px] sm:text-base leading-relaxed text-justify">
                 {post.content ? (
-                  post.content.split("\n\n").map((block, index) => {
-                    const trimmed = block.trim();
-                    if (!trimmed || /^#+\s*$/.test(trimmed)) return null;
-                    if (trimmed.startsWith("## ")) {
-                      return (
-                        <h2 key={index} className="font-serif text-xl sm:text-2xl font-bold text-[#96794F] mt-7 mb-3 border-b border-slate-100 pb-2">
-                          {renderNormalAmpersand(trimmed.replace(/^##\s+/, ""))}
-                        </h2>
-                      );
-                    }
-                    if (trimmed.startsWith("### ")) {
-                      return (
-                        <h3 key={index} className="font-serif text-lg sm:text-xl font-bold text-[#1A1816] mt-5 mb-2">
-                          {renderNormalAmpersand(trimmed.replace(/^###\s+/, ""))}
-                        </h3>
-                      );
-                    }
-                    if (trimmed.startsWith("#### ")) {
-                      return (
-                        <h4 key={index} className="font-serif text-base font-bold text-[#1A1816] mt-4 mb-2">
-                          {renderNormalAmpersand(trimmed.replace(/^####\s+/, ""))}
-                        </h4>
-                      );
-                    }
-                    if (trimmed.startsWith("- ")) {
-                      const lines = trimmed.split("\n");
-                      const items: string[] = [];
-                      let current = "";
-                      for (const l of lines) {
-                        const cl = l.trim();
-                        if (!cl) continue;
-                        if (cl.startsWith("- ")) {
-                          if (current) items.push(current);
-                          current = cl.replace(/^-\s+/, "");
-                        } else {
-                          current = current ? `${current} ${cl}` : cl;
-                        }
+                  /<[a-z][\s\S]*>/i.test(post.content) ? (
+                    <div
+                      className="article-rich-content"
+                      dangerouslySetInnerHTML={{ __html: post.content }}
+                    />
+                  ) : (
+                    post.content.split("\n\n").map((block, index) => {
+                      const trimmed = block.trim();
+                      if (!trimmed || /^#+\s*$/.test(trimmed)) return null;
+                      if (trimmed.startsWith("## ")) {
+                        return (
+                          <h2 key={index} className="font-serif text-xl sm:text-2xl font-bold text-[#96794F] mt-7 mb-3 border-b border-slate-100 pb-2">
+                            {renderNormalAmpersand(trimmed.replace(/^##\s+/, ""))}
+                          </h2>
+                        );
                       }
-                      if (current) items.push(current);
+                      if (trimmed.startsWith("### ")) {
+                        return (
+                          <h3 key={index} className="font-serif text-lg sm:text-xl font-bold text-[#1A1816] mt-5 mb-2">
+                            {renderNormalAmpersand(trimmed.replace(/^###\s+/, ""))}
+                          </h3>
+                        );
+                      }
+                      if (trimmed.startsWith("#### ")) {
+                        return (
+                          <h4 key={index} className="font-serif text-base font-bold text-[#1A1816] mt-4 mb-2">
+                            {renderNormalAmpersand(trimmed.replace(/^####\s+/, ""))}
+                          </h4>
+                        );
+                      }
+                      if (trimmed.startsWith("- ")) {
+                        const lines = trimmed.split("\n");
+                        const items: string[] = [];
+                        let current = "";
+                        for (const l of lines) {
+                          const cl = l.trim();
+                          if (!cl) continue;
+                          if (cl.startsWith("- ")) {
+                            if (current) items.push(current);
+                            current = cl.replace(/^-\s+/, "");
+                          } else {
+                            current = current ? `${current} ${cl}` : cl;
+                          }
+                        }
+                        if (current) items.push(current);
+                        return (
+                          <ul key={index} className="list-disc pl-5 space-y-1.5 my-3 text-slate-700">
+                            {items.map((it, i) => (
+                              <li key={i}>{renderNormalAmpersand(it)}</li>
+                            ))}
+                          </ul>
+                        );
+                      }
                       return (
-                        <ul key={index} className="list-disc pl-5 space-y-1.5 my-3 text-slate-700">
-                          {items.map((it, i) => (
-                            <li key={i}>{renderNormalAmpersand(it)}</li>
-                          ))}
-                        </ul>
+                        <p key={index} className="leading-relaxed">
+                          {renderNormalAmpersand(trimmed)}
+                        </p>
                       );
-                    }
-                    return (
-                      <p key={index} className="leading-relaxed">
-                        {renderNormalAmpersand(trimmed)}
-                      </p>
-                    );
-                  })
+                    })
+                  )
                 ) : (
                   <p>{post.excerpt}</p>
                 )}
