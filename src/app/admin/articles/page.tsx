@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   Plus,
   Search,
-  Filter,
   Edit2,
   Trash2,
   Eye,
@@ -201,7 +200,7 @@ export default function ArticlesAdminPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
         <div>
           <h1 className="font-serif text-2xl font-bold text-slate-900">
-            Quản Lý Bài Viết & Cẩm Nang
+            Quản Lý Bài Viết
           </h1>
           <p className="text-xs text-slate-500 mt-1">
             Tổng cộng: <strong>{articles.length}</strong> bài viết pháp luật
@@ -232,7 +231,7 @@ export default function ArticlesAdminPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <Filter className="w-4 h-4 text-slate-500 shrink-0" />
+          {/* <Filter className="w-4 h-4 text-slate-500 shrink-0" /> */}
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
@@ -270,20 +269,20 @@ export default function ArticlesAdminPage() {
             <table className="w-full text-left border-collapse table-auto">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  <th className="py-3 px-3 sm:px-4">Bài viết</th>
-                  <th className="py-3 px-3 sm:px-4 w-[140px] whitespace-nowrap">Lĩnh vực</th>
-                  <th className="py-3 px-3 sm:px-4 w-[130px] whitespace-nowrap">Tác giả</th>
-                  <th className="py-3 px-3 sm:px-4 w-[120px] whitespace-nowrap">Ngày đăng</th>
-                  <th className="py-3 px-2 sm:px-3 text-center w-[110px] whitespace-nowrap">Trạng thái</th>
-                  <th className="py-3 px-3 sm:px-4 text-right w-[90px] whitespace-nowrap pr-4">Thao tác</th>
+                  <th className="py-2.5 px-3">Bài viết</th>
+                  <th className="py-2.5 px-2 w-[115px] whitespace-nowrap">Lĩnh vực</th>
+                  <th className="py-2.5 px-2 w-[105px] whitespace-nowrap">Tác giả</th>
+                  <th className="py-2.5 px-2 w-[95px] whitespace-nowrap">Ngày đăng</th>
+                  <th className="py-2.5 px-2 text-center w-[85px] whitespace-nowrap">Trạng thái</th>
+                  <th className="py-2.5 px-3 text-right w-[80px] whitespace-nowrap pr-3">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
                 {filteredArticles.map((art) => (
                   <tr key={art.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-3 sm:px-4">
+                    <td className="py-2.5 px-3">
                       <div className="flex items-center gap-2.5">
-                        <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-xs">
+                        <div className="relative w-9 h-9 rounded bg-slate-100 overflow-hidden shrink-0 border border-slate-200 shadow-xs">
                           <Image
                             src={art.image_url || "/images/blog/phan-chia-di-san-theo-di-chuc.jpg"}
                             alt={art.title}
@@ -296,35 +295,37 @@ export default function ArticlesAdminPage() {
                           <h4 className="font-semibold text-slate-900 truncate text-xs sm:text-sm" title={art.title}>
                             {art.title}
                           </h4>
-                          <span className="text-[10.5px] text-slate-400 font-mono truncate block max-w-[220px]">
+                          <span className="text-[10px] text-slate-400 font-mono truncate block max-w-[200px]">
                             /blog/{art.slug}/
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    <td className="py-3 px-3 sm:px-4 whitespace-nowrap">
-                      <span className="inline-block px-2 py-0.5 rounded bg-[#96794F]/10 text-[#7d633e] font-semibold text-[11px] whitespace-nowrap truncate max-w-[130px]" title={art.category}>
+                    <td className="py-2.5 px-2 whitespace-nowrap">
+                      <span className="inline-block px-2 py-0.5 rounded bg-[#96794F]/10 text-[#7d633e] font-semibold text-[10.5px] whitespace-nowrap truncate max-w-[110px]" title={art.category}>
                         {art.category}
                       </span>
                     </td>
 
-                    <td className="py-3 px-3 sm:px-4 font-medium text-slate-800 whitespace-nowrap text-xs">
-                      {art.author}
+                    <td className="py-2.5 px-2 whitespace-nowrap">
+                      <span className="font-medium text-slate-800 text-xs truncate max-w-[100px] block" title={art.author}>
+                        {art.author}
+                      </span>
                     </td>
 
-                    <td className="py-3 px-3 sm:px-4 text-slate-500 whitespace-nowrap text-xs">
+                    <td className="py-2.5 px-2 text-slate-500 whitespace-nowrap text-[11px]">
                       {art.date}
                     </td>
 
-                    <td className="py-3 px-2 sm:px-3 text-center whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-100 text-emerald-700 whitespace-nowrap">
+                    <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 whitespace-nowrap">
                         <CheckCircle className="w-3 h-3 shrink-0" />
                         Đã đăng
                       </span>
                     </td>
 
-                    <td className="py-3 px-3 sm:px-4 text-right whitespace-nowrap pr-4">
+                    <td className="py-2.5 px-3 text-right whitespace-nowrap pr-3">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/blog/${art.slug}/`}
@@ -332,7 +333,7 @@ export default function ArticlesAdminPage() {
                           title="Xem bài viết"
                           className="p-1.5 text-slate-400 hover:text-[#96794F] hover:bg-slate-100 rounded transition-colors"
                         >
-                          <Eye className="w-4 h-4" />
+                          <Eye className="w-3.5 h-3.5" />
                         </Link>
                         <button
                           type="button"
@@ -340,7 +341,7 @@ export default function ArticlesAdminPage() {
                           title="Chỉnh sửa"
                           className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           type="button"
@@ -348,7 +349,7 @@ export default function ArticlesAdminPage() {
                           title="Xóa"
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
