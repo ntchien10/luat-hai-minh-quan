@@ -93,6 +93,25 @@ try {
         updated_at TEXT
     )");
 
+    // Tạo bảng form_submissions lưu các lượt điền form yêu cầu tư vấn
+    $pdo->exec("CREATE TABLE IF NOT EXISTS form_submissions (
+        id TEXT PRIMARY KEY,
+        full_name TEXT,
+        phone TEXT,
+        email TEXT,
+        service TEXT,
+        message TEXT,
+        source TEXT,
+        created_at TEXT
+    )");
+
+    // Tạo bảng site_stats lưu số lượt truy cập và thống kê
+    $pdo->exec("CREATE TABLE IF NOT EXISTS site_stats (
+        stat_key TEXT PRIMARY KEY,
+        stat_value INTEGER DEFAULT 0,
+        updated_at TEXT
+    )");
+
     // Tự động khởi tạo tài khoản admin và biên tập viên nếu bảng tài khoản đang rỗng
     $countUsers = $pdo->query("SELECT COUNT(*) FROM admin_users")->fetchColumn();
     if ($countUsers == 0) {
@@ -596,11 +615,51 @@ switch ($action) {
         ]);
         break;
 
+    // -------------------------------------------------------------
+    // 7. GHI NHẬN LƯỢT TRUY CẬP (PAGE VIEW / VISITS)
+    // -------------------------------------------------------------
+    case 'record_visit':
+        $pdo->exec("INSERT INTO site_stats (stat_key, stat_value, updated_at) 
+                    VALUES ('visit_count', 1, datetime('now')) 
+                    ON CONFLICT(stat_key) DO UPDATE SET stat_value = stat_value + 1, updated_at = datetime('now')");
+        $visits = $pdo->query("SELECT stat_value FROM site_stats WHERE stat_key = 'visit_count'")->fetchColumn();
+        echo json_encode(['success' => true, 'visit_count' => (int)$visits]);
+        break;
+
+    // -------------------------------------------------------------
+    // 8. GHI NHẬN & QUẢN LÝ LƯỢT ĐIỀN FORM TƯ VẤN
+    // -------------------------------------------------------------
+    case 'record_form':
+        $id = $body['id'] ?? ('form-' . time() . '-' . rand(100, 999));
+        $fullName = trim($body['fullName'] ?? ($body['full_name'] ?? 'Khách hàng'));
+        $phone = trim($body['phone'] ?? '');
+        $email = trim($body['email'] ?? '');
+        $service = trim($body['service'] ?? 'Tư vấn chung');
+        $message = trim($body['message'] ?? '');
+        $source = trim($body['source'] ?? 'Website Form');
+        $createdAt = date('c');
+
+        $stmt = $pdo->prepare("INSERT INTO form_submissions (id, full_name, phone, email, service, message, source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$id, $fullName, $phone, $email, $service, $message, $source, $createdAt]);
+
+        $formsCount = $pdo->query("SELECT COUNT(*) FROM form_submissions")->fetchColumn();
+        echo json_encode(['success' => true, 'id' => $id, 'form_count' => (int)$formsCount]);
+        break;
+
+    case 'forms':
+        $stmt = $pdo->query("SELECT * FROM form_submissions ORDER BY created_at DESC LIMIT 50");
+        $submissions = $stmt->fetchAll();
+        $formsCount = $pdo->query("SELECT COUNT(*) FROM form_submissions")->fetchColumn();
+        echo json_encode(['success' => true, 'submissions' => $submissions, 'count' => (int)$formsCount]);
+        break;
+
     case 'status':
     default:
         $countArt = $pdo->query("SELECT COUNT(*) FROM articles")->fetchColumn();
         $countMem = $pdo->query("SELECT COUNT(*) FROM team_members")->fetchColumn();
         $countActiveMem = $pdo->query("SELECT COUNT(*) FROM team_members WHERE is_active = 1")->fetchColumn();
+        $countForms = $pdo->query("SELECT COUNT(*) FROM form_submissions")->fetchColumn();
+        $countVisits = $pdo->query("SELECT stat_value FROM site_stats WHERE stat_key = 'visit_count'")->fetchColumn() ?: 0;
 
         echo json_encode([
             'success' => true,
@@ -611,6 +670,8 @@ switch ($action) {
             'articles_count' => (int)$countArt,
             'team_count' => (int)$countMem,
             'active_team_count' => (int)$countActiveMem,
+            'forms_count' => (int)$countForms,
+            'visits_count' => (int)$countVisits,
             'uploads_dir' => $uploadsBaseDir,
             'uploads_writable' => is_writable($uploadsBaseDir)
         ]);

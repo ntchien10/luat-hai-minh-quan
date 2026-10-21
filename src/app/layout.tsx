@@ -95,6 +95,7 @@ export const metadata: Metadata = {
 };
 
 import { LegalServiceSchema } from "@/components/seo/JsonLd";
+import { VisitTracker } from "@/components/common/VisitTracker";
 
 export default function RootLayout({
   children,
@@ -107,6 +108,7 @@ export default function RootLayout({
       className={`${playfair.variable} ${jakarta.variable} scroll-smooth antialiased`}
     >
       <body className="min-h-screen flex flex-col bg-warm-50 text-navy-900 font-sans selection:bg-gold-500 selection:text-white">
+        <VisitTracker />
         <LegalServiceSchema />
         {children}
       </body>

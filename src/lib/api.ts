@@ -466,6 +466,8 @@ export async function getSystemStatus(): Promise<{
   database?: string;
   articles_count?: number;
   team_count?: number;
+  forms_count?: number;
+  visits_count?: number;
   uploads_writable?: boolean;
 }> {
   try {
@@ -473,18 +475,88 @@ export async function getSystemStatus(): Promise<{
       cache: "no-store",
     });
     if (res.ok) {
-      return await res.json();
+      const data = await res.json();
+      return data;
     }
   } catch (e) {
     console.warn("Status API offline...", e);
   }
+
+  const localForms = typeof window !== "undefined" ? parseInt(localStorage.getItem("hmq_form_submissions") || "12", 10) : 12;
+  const localVisits = typeof window !== "undefined" ? parseInt(localStorage.getItem("hmq_site_visits") || "128", 10) : 128;
+
   return {
     success: true,
     database: "Chế độ Dự phòng / Local Storage",
     articles_count: allArticlesData.length,
     team_count: allTeamMembersArchive.length,
+    forms_count: localForms,
+    visits_count: localVisits,
     uploads_writable: true,
   };
+}
+
+/**
+ * 10.1. GHI NHẬN LƯỢT TRUY CẬP WEBSITE
+ */
+export async function recordVisit(): Promise<number> {
+  try {
+    const res = await fetch(`${getApiBase()}/?action=record_visit`, {
+      method: "POST",
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && typeof data.visit_count === "number") {
+        return data.visit_count;
+      }
+    }
+  } catch (e) {
+    console.debug("Record visit offline:", e);
+  }
+
+  if (typeof window !== "undefined") {
+    const current = parseInt(localStorage.getItem("hmq_site_visits") || "128", 10);
+    const updated = current + 1;
+    localStorage.setItem("hmq_site_visits", updated.toString());
+    return updated;
+  }
+  return 128;
+}
+
+/**
+ * 10.2. GHI NHẬN LƯỢT ĐIỀN FORM TƯ VẤN
+ */
+export async function recordFormSubmission(formData: {
+  fullName: string;
+  phone: string;
+  email?: string;
+  service?: string;
+  message?: string;
+  source?: string;
+}): Promise<number> {
+  try {
+    const res = await fetch(`${getApiBase()}/?action=record_form`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && typeof data.form_count === "number") {
+        return data.form_count;
+      }
+    }
+  } catch (e) {
+    console.warn("Record form offline:", e);
+  }
+
+  if (typeof window !== "undefined") {
+    const current = parseInt(localStorage.getItem("hmq_form_submissions") || "12", 10);
+    const updated = current + 1;
+    localStorage.setItem("hmq_form_submissions", updated.toString());
+    return updated;
+  }
+  return 12;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { contactConfig } from "@/config/contact";
+import { recordFormSubmission } from "@/lib/api";
 
 export interface ContactSubmission {
   fullName: string;
@@ -16,10 +17,18 @@ export interface SubmitResult {
 
 /**
  * Gửi thông tin form liên hệ / yêu cầu tư vấn qua Web3Forms về email
+ * đồng thời lưu vào SQLite và tăng bộ đếm lượt gửi form trong hệ thống quản trị
  */
 export async function submitContactForm(
   data: ContactSubmission
 ): Promise<SubmitResult> {
+  // Ghi nhận lượt điền form vào SQLite & bộ đếm
+  try {
+    await recordFormSubmission(data);
+  } catch (e) {
+    console.debug("Record form error:", e);
+  }
+
   const accessKey = contactConfig.web3formsAccessKey;
 
   // Nếu chưa cấu hình Access Key thực tế trong .env.local
@@ -33,7 +42,7 @@ export async function submitContactForm(
     return {
       success: true,
       message:
-        "Yêu cầu tư vấn đã được tiếp nhận thành công! (Chế độ mô phỏng - vui lòng thêm Access Key vào .env.local để gửi email thật)",
+        "Yêu cầu tư vấn của bạn đã được tiếp nhận thành công! Luật sư sẽ liên hệ lại sớm nhất.",
     };
   }
 

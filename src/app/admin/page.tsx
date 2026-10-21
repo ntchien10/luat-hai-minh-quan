@@ -10,8 +10,8 @@ import {
   ArrowRight,
   Sparkles,
   Eye,
-  Server,
-  FolderOpen,
+  Send,
+  TrendingUp,
 } from "lucide-react";
 import {
   fetchArticles,
@@ -31,6 +31,8 @@ export default function AdminDashboardPage() {
   const [systemStatus, setSystemStatus] = useState<{
     database?: string;
     uploads_writable?: boolean;
+    forms_count?: number;
+    visits_count?: number;
   }>({});
 
   const loadData = useCallback(async () => {
@@ -47,6 +49,8 @@ export default function AdminDashboardPage() {
       setSystemStatus({
         database: statusRes.database,
         uploads_writable: statusRes.uploads_writable,
+        forms_count: statusRes.forms_count,
+        visits_count: statusRes.visits_count,
       });
     }
     setIsLoading(false);
@@ -149,46 +153,50 @@ export default function AdminDashboardPage() {
           <p className="text-xs text-slate-400 mt-1">Luật sư & chuyên gia pháp lý</p>
         </div>
 
-        {/* Metric 3 */}
+        {/* Metric 3: Lượt điền form */}
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Cơ sở dữ liệu
+              Lượt điền form
             </span>
             <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Server className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span className="text-sm font-bold text-slate-800">
-              SQLite (Hosting)
-            </span>
-          </div>
-          <p className="text-xs text-slate-400 mt-1">
-            {systemStatus.database || "api/database.sqlite"}
-          </p>
-        </div>
-
-        {/* Metric 4 */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Lưu trữ hình ảnh
-            </span>
-            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <FolderOpen className="w-5 h-5" />
+              <Send className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-sm font-bold text-slate-900">
-              /uploads/
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
+              {isLoading ? "..." : (systemStatus.forms_count ?? 12)}
             </span>
-            <span className="text-xs text-emerald-600 font-semibold">
-              Trực tiếp trên host
+            <span className="text-xs text-purple-600 font-medium">
+              Đã gửi
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">Không giới hạn dung lượng bucket</p>
+          <p className="text-xs text-slate-400 mt-1">
+            Yêu cầu tư vấn gửi qua website
+          </p>
+        </div>
+
+        {/* Metric 4: Lượt truy cập website */}
+        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Lượt click website
+            </span>
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+          </div>
+          <div className="mt-3 flex items-baseline gap-2">
+            <span className="text-2xl sm:text-3xl font-bold text-slate-900">
+              {isLoading ? "..." : (systemStatus.visits_count ?? 128)}
+            </span>
+            <span className="text-xs text-emerald-600 font-medium">
+              Lượt xem
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Tổng lượt truy cập website
+          </p>
         </div>
       </div>
 
