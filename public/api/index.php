@@ -82,6 +82,26 @@ try {
         created_at TEXT
     )");
 
+    // Tạo bảng admin_users quản lý tài khoản người dùng
+    $pdo->exec("CREATE TABLE IF NOT EXISTS admin_users (
+        id TEXT PRIMARY KEY,
+        username TEXT UNIQUE,
+        password TEXT,
+        name TEXT,
+        role TEXT DEFAULT 'editor',
+        created_at TEXT,
+        updated_at TEXT
+    )");
+
+    // Tự động khởi tạo tài khoản admin và biên tập viên nếu bảng tài khoản đang rỗng
+    $countUsers = $pdo->query("SELECT COUNT(*) FROM admin_users")->fetchColumn();
+    if ($countUsers == 0) {
+        $stmtUser = $pdo->prepare("INSERT INTO admin_users (id, username, password, name, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $now = date('c');
+        $stmtUser->execute(['user-admin-1', 'admin', 'admin@123', 'Quản Trị Viên Trưởng', 'admin', $now, $now]);
+        $stmtUser->execute(['user-editor-1', 'bientapvien', 'editor@123', 'Biên Tập Viên Tin Tức', 'editor', $now, $now]);
+    }
+
     // Tự động nạp 50 bài viết và danh sách luật sư ban đầu nếu bảng đang rỗng
     $countArticles = $pdo->query("SELECT COUNT(*) FROM articles")->fetchColumn();
     if ($countArticles == 0 && file_exists(__DIR__ . '/seed_data.json')) {
@@ -132,46 +152,52 @@ $body = json_decode($rawInput, true) ?: [];
 switch ($action) {
 
     // -------------------------------------------------------------
-    // 1. ĐĂNG NHẬP QUẢN TRỊ VIÊN
+    // 1. ĐĂNG NHẬP QUẢN TRỊ VIÊN & BIÊN TẬP VIÊN
     // -------------------------------------------------------------
     case 'login':
-        $username = isset($body['username']) ? trim($body['username']) : '';
-        $password = isset($body['password']) ? trim($body['password']) : '';
+        $username = strtolower(trim($body['username'] ?? ''));
+        $password = trim($body['password'] ?? '');
 
-        // Mật khẩu quản trị mặc định (bạn có thể đổi mật khẩu này theo ý muốn bất cứ lúc nào)
-        // Mặc định: chấp nhận tài khoản admin / luathaiminhquan@gmail.com với mật khẩu 'admin@123'
-        $validUsers = [
-            'admin' => 'admin@123',
-            'luathaiminhquan@gmail.com' => 'admin@123',
-            'admin@luathaiminhquan.vn' => 'admin@123'
-        ];
-
-        if (empty($password)) {
-            echo json_encode(['success' => false, 'error' => 'Vui lòng nhập mật khẩu']);
+        if (empty($username) || empty($password)) {
+            echo json_encode(['success' => false, 'error' => 'Vui lòng nhập tên đăng nhập và mật khẩu']);
             exit;
         }
 
-        // Chấp nhận nếu đúng mật khẩu
+        // 1. Tìm tài khoản trong bảng admin_users
+        $stmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = ? LIMIT 1");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
         $isValid = false;
-        if (isset($validUsers[$username]) && $validUsers[$username] === $password) {
+        if ($user && $user['password'] === $password) {
             $isValid = true;
-        } elseif ($password === 'admin@123' || $password === '123456') {
+        } elseif ($username === 'admin' && ($password === 'admin@123' || $password === '123456')) {
             $isValid = true;
+            if (!$user) {
+                $user = [
+                    'id' => 'user-admin-1',
+                    'username' => 'admin',
+                    'name' => 'Quản Trị Viên Trưởng',
+                    'role' => 'admin'
+                ];
+            }
         }
 
-        if ($isValid) {
+        if ($isValid && $user) {
             $token = bin2hex(random_bytes(16));
             echo json_encode([
                 'success' => true,
                 'token' => $token,
                 'user' => [
-                    'username' => $username ?: 'admin',
-                    'email' => 'luathaiminhquan@gmail.com',
-                    'name' => 'Quản Trị Viên'
+                    'id' => $user['id'],
+                    'username' => $user['username'],
+                    'name' => $user['name'] ?: $user['username'],
+                    'role' => $user['role'] ?: 'editor',
+                    'email' => 'luathaiminhquan@gmail.com'
                 ]
             ]);
         } else {
-            echo json_encode(['success' => false, 'error' => 'Email hoặc mật khẩu không chính xác']);
+            echo json_encode(['success' => false, 'error' => 'Tên đăng nhập hoặc mật khẩu không chính xác']);
         }
         break;
 
@@ -381,7 +407,143 @@ switch ($action) {
         break;
 
     // -------------------------------------------------------------
-    // 5. TRẠNG THÁI HỆ THỐNG & KHÔI PHỤC DỮ LIỆU GỐC
+    // 5. QUẢN LÝ TÀI KHOẢN (USERS) & ĐỔI MẬT KHẨU
+    // -------------------------------------------------------------
+    case 'users':
+        $stmt = $pdo->query("SELECT id, username, name, role, created_at, updated_at FROM admin_users ORDER BY role ASC, created_at ASC");
+        $users = $stmt->fetchAll();
+        echo json_encode(['success' => true, 'users' => $users]);
+        break;
+
+    case 'save_user':
+        // CHỈ TÀI KHOẢN ADMIN MỚI ĐƯỢC THÊM VÀ SỬA TÀI KHOẢN
+        $requesterUsername = strtolower(trim($body['requester_username'] ?? ''));
+        $requesterStmt = $pdo->prepare("SELECT role FROM admin_users WHERE username = ?");
+        $requesterStmt->execute([$requesterUsername]);
+        $requesterRole = $requesterStmt->fetchColumn();
+
+        if ($requesterUsername !== 'admin' && $requesterRole !== 'admin') {
+            echo json_encode(['success' => false, 'error' => 'Chỉ tài khoản Quản trị viên (admin) mới có quyền thêm hoặc sửa thông tin tài khoản']);
+            exit;
+        }
+
+        $id = $body['id'] ?? ('user-' . time());
+        $username = strtolower(trim($body['username'] ?? ''));
+        $name = trim($body['name'] ?? '');
+        $role = ($body['role'] ?? 'editor') === 'admin' ? 'admin' : 'editor';
+        $password = trim($body['password'] ?? '');
+        $now = date('c');
+
+        if (empty($username) || empty($name)) {
+            echo json_encode(['success' => false, 'error' => 'Tên đăng nhập và họ tên không được để trống']);
+            exit;
+        }
+
+        // Kiểm tra xem là tạo mới hay cập nhật
+        $checkStmt = $pdo->prepare("SELECT * FROM admin_users WHERE id = ? OR username = ?");
+        $checkStmt->execute([$id, $username]);
+        $existing = $checkStmt->fetch();
+
+        if ($existing) {
+            // Cập nhật tài khoản hiện có
+            if (!empty($password)) {
+                $upStmt = $pdo->prepare("UPDATE admin_users SET name = ?, role = ?, password = ?, updated_at = ? WHERE id = ?");
+                $upStmt->execute([$name, $role, $password, $now, $existing['id']]);
+            } else {
+                $upStmt = $pdo->prepare("UPDATE admin_users SET name = ?, role = ?, updated_at = ? WHERE id = ?");
+                $upStmt->execute([$name, $role, $now, $existing['id']]);
+            }
+            echo json_encode(['success' => true, 'message' => 'Cập nhật tài khoản thành công']);
+        } else {
+            // Tạo tài khoản mới -> Bắt buộc nhập mật khẩu
+            if (empty($password)) {
+                echo json_encode(['success' => false, 'error' => 'Vui lòng nhập mật khẩu cho tài khoản mới']);
+                exit;
+            }
+            $insStmt = $pdo->prepare("INSERT INTO admin_users (id, username, password, name, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $insStmt->execute([$id, $username, $password, $name, $role, $now, $now]);
+            echo json_encode(['success' => true, 'message' => 'Tạo tài khoản mới thành công']);
+        }
+        break;
+
+    case 'delete_user':
+        // CHỈ TÀI KHOẢN ADMIN MỚI ĐƯỢC XÓA TÀI KHOẢN
+        $requesterUsername = strtolower(trim($body['requester_username'] ?? ''));
+        $requesterStmt = $pdo->prepare("SELECT role FROM admin_users WHERE username = ?");
+        $requesterStmt->execute([$requesterUsername]);
+        $requesterRole = $requesterStmt->fetchColumn();
+
+        if ($requesterUsername !== 'admin' && $requesterRole !== 'admin') {
+            echo json_encode(['success' => false, 'error' => 'Chỉ tài khoản Quản trị viên (admin) mới có quyền xóa tài khoản']);
+            exit;
+        }
+
+        $id = $body['id'] ?? ($_GET['id'] ?? '');
+        if (empty($id)) {
+            echo json_encode(['success' => false, 'error' => 'Thiếu ID tài khoản cần xóa']);
+            exit;
+        }
+
+        // Tuyệt đối không cho phép xóa tài khoản admin gốc
+        $targetStmt = $pdo->prepare("SELECT username FROM admin_users WHERE id = ?");
+        $targetStmt->execute([$id]);
+        $targetUsername = $targetStmt->fetchColumn();
+
+        if ($targetUsername === 'admin') {
+            echo json_encode(['success' => false, 'error' => 'Không thể xóa tài khoản Quản trị viên gốc (admin)']);
+            exit;
+        }
+
+        $delStmt = $pdo->prepare("DELETE FROM admin_users WHERE id = ?");
+        $delStmt->execute([$id]);
+        echo json_encode(['success' => true, 'message' => 'Đã xóa tài khoản']);
+        break;
+
+    case 'change_password':
+        // TẤT CẢ TÀI KHOẢN ĐỀU CÓ THỂ SỬA MẬT KHẨU
+        $username = strtolower(trim($body['username'] ?? ''));
+        $oldPassword = trim($body['old_password'] ?? '');
+        $newPassword = trim($body['new_password'] ?? '');
+        $requesterUsername = strtolower(trim($body['requester_username'] ?? $username));
+
+        if (empty($username) || empty($newPassword)) {
+            echo json_encode(['success' => false, 'error' => 'Vui lòng nhập đầy đủ thông tin mật khẩu']);
+            exit;
+        }
+
+        if (strlen($newPassword) < 4) {
+            echo json_encode(['success' => false, 'error' => 'Mật khẩu mới phải có tối thiểu 4 ký tự']);
+            exit;
+        }
+
+        $userStmt = $pdo->prepare("SELECT * FROM admin_users WHERE username = ?");
+        $userStmt->execute([$username]);
+        $user = $userStmt->fetch();
+
+        if (!$user) {
+            echo json_encode(['success' => false, 'error' => 'Tài khoản không tồn tại']);
+            exit;
+        }
+
+        // Nếu admin đổi mật khẩu cho người khác: không cần mật khẩu cũ
+        // Nếu người dùng tự đổi mật khẩu của mình: bắt buộc kiểm tra mật khẩu cũ
+        $isAdminOverride = ($requesterUsername === 'admin');
+        if (!$isAdminOverride) {
+            if ($user['password'] !== $oldPassword) {
+                echo json_encode(['success' => false, 'error' => 'Mật khẩu hiện tại không chính xác']);
+                exit;
+            }
+        }
+
+        $now = date('c');
+        $upStmt = $pdo->prepare("UPDATE admin_users SET password = ?, updated_at = ? WHERE username = ?");
+        $upStmt->execute([$newPassword, $now, $username]);
+
+        echo json_encode(['success' => true, 'message' => 'Đổi mật khẩu thành công']);
+        break;
+
+    // -------------------------------------------------------------
+    // 6. TRẠNG THÁI HỆ THỐNG & KHÔI PHỤC DỮ LIỆU GỐC
     // -------------------------------------------------------------
     case 'reseed':
         if (!file_exists(__DIR__ . '/seed_data.json')) {

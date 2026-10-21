@@ -13,7 +13,7 @@ import {
   Scale,
   Menu,
   X,
-  Database,
+  UserCog,
   Server,
 } from "lucide-react";
 
@@ -27,6 +27,8 @@ export default function AdminLayout({
   const isLoginPage = pathname === "/admin/login" || pathname === "/admin/login/";
   const [isLoading, setIsLoading] = useState(!isLoginPage);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>("admin");
+  const [userName, setUserName] = useState<string>("Admin");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -41,8 +43,13 @@ export default function AdminLayout({
       if (!isMounted) return;
 
       const session = typeof window !== "undefined" ? localStorage.getItem("hmq_admin_session") : null;
+      const role = typeof window !== "undefined" ? localStorage.getItem("hmq_admin_role") : null;
+      const name = typeof window !== "undefined" ? localStorage.getItem("hmq_admin_name") : null;
+
       if (session) {
         setUserEmail(session);
+        setUserRole(role || (session === "admin" ? "admin" : "editor"));
+        setUserName(name || session);
         setIsLoading(false);
         return;
       }
@@ -64,6 +71,8 @@ export default function AdminLayout({
     if (typeof window !== "undefined") {
       localStorage.removeItem("hmq_admin_session");
       localStorage.removeItem("hmq_admin_token");
+      localStorage.removeItem("hmq_admin_role");
+      localStorage.removeItem("hmq_admin_name");
     }
     router.push("/admin/login/");
   };
@@ -106,10 +115,10 @@ export default function AdminLayout({
       active: pathname.startsWith("/admin/team"),
     },
     {
-      label: "Cài đặt & Dữ liệu",
-      href: "/admin/setup/",
-      icon: Database,
-      active: pathname.startsWith("/admin/setup"),
+      label: "Quản lý tài khoản",
+      href: "/admin/users/",
+      icon: UserCog,
+      active: pathname.startsWith("/admin/users") || pathname.startsWith("/admin/setup"),
     },
   ];
 
@@ -163,10 +172,10 @@ export default function AdminLayout({
             <div className="flex items-center gap-2 pl-2 border-l border-white/15">
               <div className="hidden md:block text-right">
                 <span className="block text-xs font-semibold text-white truncate max-w-[150px]">
-                  {userEmail || "Quản trị viên"}
+                  {userName || userEmail || "Quản trị viên"}
                 </span>
-                <span className="block text-[10px] text-slate-400">
-                  Admin
+                <span className="block text-[10px] text-[#DFBA73] font-semibold uppercase tracking-wider">
+                  {userRole === "admin" ? "Admin" : "Biên tập viên"}
                 </span>
               </div>
 

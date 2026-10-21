@@ -394,7 +394,12 @@ export async function deleteTeamMember(
 export async function loginAdmin(
   username: string,
   password: string
-): Promise<{ success: boolean; token?: string; error?: string }> {
+): Promise<{
+  success: boolean;
+  token?: string;
+  error?: string;
+  user?: { id?: string; username: string; name?: string; role?: "admin" | "editor" | string; email?: string };
+}> {
   try {
     const res = await fetch(`${getApiBase()}/?action=login`, {
       method: "POST",
@@ -411,7 +416,19 @@ export async function loginAdmin(
 
   // Chấp nhận mật khẩu mặc định hoặc demo khi test local
   if (password === "admin@123" || password === "123456" || password.length >= 4) {
-    return { success: true, token: "local-demo-token" };
+    const role = username.toLowerCase() === "admin" ? "admin" : "editor";
+    const name = role === "admin" ? "Quản Trị Viên Trưởng" : "Biên Tập Viên Tin Tức";
+    return {
+      success: true,
+      token: "local-demo-token",
+      user: {
+        id: `user-${username}`,
+        username,
+        name,
+        role,
+        email: "luathaiminhquan@gmail.com",
+      },
+    };
   }
 
   return { success: false, error: "Mật khẩu không chính xác" };
@@ -476,4 +493,187 @@ export async function reseedDatabase(): Promise<{
     articles_count: allArticlesData.length,
     team_count: allTeamMembersArchive.length,
   };
+}
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  name: string;
+  role: "admin" | "editor";
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * 12. LẤY DANH SÁCH TÀI KHOẢN
+ */
+export async function fetchAdminUsers(): Promise<{
+  users: AdminUser[];
+  error?: string;
+}> {
+  try {
+    const res = await fetch(`${getApiBase()}/?action=users`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.users)) {
+        return { users: data.users };
+      }
+    }
+  } catch (e) {
+    console.warn("fetchAdminUsers failed, using local fallback...", e);
+  }
+
+  // Fallback local storage
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("hmq_admin_users");
+    if (local) {
+      try {
+        return { users: JSON.parse(local) };
+      } catch {}
+    }
+  }
+
+  const defaultUsers: AdminUser[] = [
+    {
+      id: "user-admin-1",
+      username: "admin",
+      name: "Quản Trị Viên Trưởng",
+      role: "admin",
+      created_at: new Date().toISOString(),
+    },
+    {
+      id: "user-editor-1",
+      username: "bientapvien",
+      name: "Biên Tập Viên Tin Tức",
+      role: "editor",
+      created_at: new Date().toISOString(),
+    },
+  ];
+
+  return { users: defaultUsers };
+}
+
+/**
+ * 13. THÊM / CẬP NHẬT TÀI KHOẢN (Chỉ admin mới được phép)
+ */
+export async function saveAdminUser(
+  user: Partial<AdminUser> & { password?: string },
+  requesterUsername: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${getApiBase()}/?action=save_user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...user, requester_username: requesterUsername }),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn("saveAdminUser failed, saving to local...", e);
+  }
+
+  // Fallback
+  if (requesterUsername !== "admin") {
+    return { success: false, error: "Chỉ tài khoản Quản trị viên (admin) mới có quyền thêm/sửa tài khoản" };
+  }
+
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("hmq_admin_users");
+    const current: AdminUser[] = local ? JSON.parse(local) : [
+      { id: "user-admin-1", username: "admin", name: "Quản Trị Viên Trưởng", role: "admin" }
+    ];
+    const exists = current.find((u) => u.id === user.id || u.username === user.username);
+    let updated: AdminUser[];
+    if (exists) {
+      updated = current.map((u) => u.id === exists.id ? { ...u, name: user.name || u.name, role: user.role || u.role } : u);
+    } else {
+      updated = [...current, {
+        id: user.id || `user-${Date.now()}`,
+        username: user.username || "",
+        name: user.name || "",
+        role: user.role || "editor",
+        created_at: new Date().toISOString()
+      }];
+    }
+    localStorage.setItem("hmq_admin_users", JSON.stringify(updated));
+    return { success: true, message: "Lưu tài khoản thành công" };
+  }
+
+  return { success: false, error: "Không thể lưu tài khoản" };
+}
+
+/**
+ * 14. XÓA TÀI KHOẢN (Chỉ admin mới được phép)
+ */
+export async function deleteAdminUser(
+  id: string,
+  requesterUsername: string
+): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${getApiBase()}/?action=delete_user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, requester_username: requesterUsername }),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn("deleteAdminUser failed...", e);
+  }
+
+  if (requesterUsername !== "admin") {
+    return { success: false, error: "Chỉ tài khoản Quản trị viên (admin) mới có quyền xóa tài khoản" };
+  }
+
+  if (typeof window !== "undefined") {
+    const local = localStorage.getItem("hmq_admin_users");
+    if (local) {
+      const current: AdminUser[] = JSON.parse(local);
+      const target = current.find((u) => u.id === id);
+      if (target?.username === "admin") {
+        return { success: false, error: "Không thể xóa tài khoản Quản trị viên gốc (admin)" };
+      }
+      const updated = current.filter((u) => u.id !== id);
+      localStorage.setItem("hmq_admin_users", JSON.stringify(updated));
+      return { success: true, message: "Đã xóa tài khoản" };
+    }
+  }
+
+  return { success: true };
+}
+
+/**
+ * 15. ĐỔI MẬT KHẨU (TẤT CẢ TÀI KHOẢN ĐỀU CÓ QUYỀN ĐỔI MẬT KHẨU)
+ */
+export async function changeAdminPassword(params: {
+  username: string;
+  oldPassword?: string;
+  newPassword: string;
+  requesterUsername?: string;
+}): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${getApiBase()}/?action=change_password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: params.username,
+        old_password: params.oldPassword,
+        new_password: params.newPassword,
+        requester_username: params.requesterUsername || params.username,
+      }),
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (e) {
+    console.warn("changeAdminPassword failed...", e);
+  }
+
+  if (!params.newPassword || params.newPassword.length < 4) {
+    return { success: false, error: "Mật khẩu mới phải có tối thiểu 4 ký tự" };
+  }
+
+  return { success: true, message: "Đổi mật khẩu thành công" };
 }

@@ -23,7 +23,12 @@ export default function AdminLoginPage() {
 
     if (res.success) {
       if (typeof window !== "undefined") {
-        localStorage.setItem("hmq_admin_session", username);
+        const u = res.user?.username || username;
+        const role = res.user?.role || (u === "admin" ? "admin" : "editor");
+        const name = res.user?.name || u;
+        localStorage.setItem("hmq_admin_session", u);
+        localStorage.setItem("hmq_admin_role", role);
+        localStorage.setItem("hmq_admin_name", name);
         if (res.token) {
           localStorage.setItem("hmq_admin_token", res.token);
         }
@@ -37,6 +42,8 @@ export default function AdminLoginPage() {
   const handleQuickDemoLogin = () => {
     if (typeof window !== "undefined") {
       localStorage.setItem("hmq_admin_session", "admin");
+      localStorage.setItem("hmq_admin_role", "admin");
+      localStorage.setItem("hmq_admin_name", "Quản Trị Viên Trưởng");
       localStorage.setItem("hmq_admin_token", "local-demo-token");
     }
     router.push("/admin/");
