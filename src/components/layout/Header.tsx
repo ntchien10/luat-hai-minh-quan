@@ -196,26 +196,46 @@ export const Header: React.FC = () => {
     };
   }, []);
 
-  const [currentLang, setCurrentLang] = useState<"vi" | "en" | "ja" | "ko">("vi");
-
-  useEffect(() => {
-    // 1. Kiểm tra ngôn ngữ hiện tại từ cookie hoặc storage
+  // Khởi tạo ngôn ngữ ngay từ attribute data-lang (đã được sync script trong <head> gán trước đó),
+  // hoặc localStorage / cookie để TUYỆT ĐỐI KHÔNG BỊ NHẢY cờ Việt Nam
+  const [currentLang, setCurrentLang] = useState<"vi" | "en" | "ja" | "ko">(() => {
     if (typeof document !== "undefined") {
-      const cookies = document.cookie.split(";");
-      const transCookie = cookies.find((c) => c.trim().startsWith("googtrans="));
-      if (transCookie) {
-        const val = transCookie.split("=")[1]?.trim();
-        if (val?.endsWith("/en")) setCurrentLang("en");
-        else if (val?.endsWith("/ja")) setCurrentLang("ja");
-        else if (val?.endsWith("/ko")) setCurrentLang("ko");
-        else setCurrentLang("vi");
-      } else {
-        const saved = localStorage.getItem("selected_lang") as "vi" | "en" | "ja" | "ko";
-        if (saved) setCurrentLang(saved);
+      const docLang = document.documentElement.getAttribute("data-lang") as "vi" | "en" | "ja" | "ko";
+      if (docLang && ["vi", "en", "ja", "ko"].includes(docLang)) {
+        return docLang;
       }
     }
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("selected_lang") as "vi" | "en" | "ja" | "ko";
+        if (saved && ["vi", "en", "ja", "ko"].includes(saved)) {
+          return saved;
+        }
+        const m = document.cookie.match(/(?:^|;\s*)googtrans=\/(?:vi|auto)\/([a-z]+)/);
+        if (m && m[1] && ["vi", "en", "ja", "ko"].includes(m[1])) {
+          return m[1] as "vi" | "en" | "ja" | "ko";
+        }
+      } catch (e) {}
+    }
+    return "vi";
+  });
 
-    // 2. Tải Google Translate script
+  // Hàm kích hoạt dịch tự động của Google Translate với cơ chế thử lại nếu script đang load
+  const triggerGoogleTranslate = (langCode: "vi" | "en" | "ja" | "ko", retries = 25) => {
+    if (typeof document === "undefined") return;
+    const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+    if (combo) {
+      const targetVal = langCode === "vi" ? "" : langCode;
+      combo.value = targetVal;
+      combo.dispatchEvent(new Event("change", { bubbles: true }));
+      combo.dispatchEvent(new Event("input", { bubbles: true }));
+    } else if (retries > 0) {
+      setTimeout(() => triggerGoogleTranslate(langCode, retries - 1), 150);
+    }
+  };
+
+  useEffect(() => {
+    // Tải Google Translate script an toàn
     if (typeof window !== "undefined" && !document.getElementById("google-translate-script")) {
       window.googleTranslateElementInit = () => {
         if (window.google?.translate) {
@@ -227,12 +247,17 @@ export const Header: React.FC = () => {
             },
             "google_translate_element"
           );
+          // Nếu người dùng đã chọn ngôn ngữ khác tiếng Việt từ trước, kích hoạt ngay khi Google Translate sẵn sàng
+          const saved = (localStorage.getItem("selected_lang") || "vi") as "vi" | "en" | "ja" | "ko";
+          if (saved !== "vi") {
+            setTimeout(() => triggerGoogleTranslate(saved), 150);
+          }
         }
       };
 
       const script = document.createElement("script");
       script.id = "google-translate-script";
-      script.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+      script.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
       script.async = true;
       document.body.appendChild(script);
     }
@@ -240,34 +265,51 @@ export const Header: React.FC = () => {
 
   const handleSelectLanguage = (langCode: "vi" | "en" | "ja" | "ko") => {
     setCurrentLang(langCode);
-    if (typeof window !== "undefined") {
+    if (typeof window === "undefined") return;
+
+    // Cập nhật ngay lập tức data-lang trên thẻ html để CSS kích hoạt cờ tức thì 0ms, không giật
+    document.documentElement.setAttribute("data-lang", langCode);
+    try {
       localStorage.setItem("selected_lang", langCode);
-      const hostname = window.location.hostname;
+    } catch (e) {}
 
-      if (langCode === "vi") {
-        document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; domain=.${hostname}; path=/;`;
-        const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
-        if (select) {
-          select.value = "vi";
-          select.dispatchEvent(new Event("change"));
-        } else {
-          window.location.reload();
-        }
-        return;
+    const host = window.location.hostname;
+
+    if (langCode === "vi") {
+      // Xóa sạch cookie googtrans để trở về tiếng Việt gốc
+      const domains = ["", host];
+      if (!host.includes("localhost") && !host.includes("127.0.0.1")) {
+        domains.push(`.${host}`);
       }
+      domains.forEach((d) => {
+        const domainStr = d ? `; domain=${d}` : "";
+        document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/${domainStr}`;
+      });
 
-      document.cookie = `googtrans=/vi/${langCode}; path=/;`;
-      document.cookie = `googtrans=/vi/${langCode}; domain=.${hostname}; path=/;`;
-
-      const select = document.querySelector<HTMLSelectElement>(".goog-te-combo");
-      if (select) {
-        select.value = langCode;
-        select.dispatchEvent(new Event("change"));
-      } else {
-        window.location.reload();
+      const combo = document.querySelector<HTMLSelectElement>(".goog-te-combo");
+      if (combo) {
+        combo.value = "";
+        combo.dispatchEvent(new Event("change", { bubbles: true }));
+        combo.dispatchEvent(new Event("input", { bubbles: true }));
       }
+      // Reload nhanh để trả lại văn bản gốc tiếng Việt nguyên bản 100% sạch sẽ
+      setTimeout(() => window.location.reload(), 150);
+      return;
     }
+
+    // Ghi cookie cho cả /vi/ và /auto/ để Google Translate nhận diện mọi trường hợp
+    const domains = ["", host];
+    if (!host.includes("localhost") && !host.includes("127.0.0.1")) {
+      domains.push(`.${host}`);
+    }
+    domains.forEach((d) => {
+      const domainStr = d ? `; domain=${d}` : "";
+      document.cookie = `googtrans=/vi/${langCode}; path=/${domainStr}`;
+      document.cookie = `googtrans=/auto/${langCode}; path=/${domainStr}`;
+    });
+
+    // Kích hoạt dịch trực tiếp trên trang
+    triggerGoogleTranslate(langCode);
   };
 
   useEffect(() => {
@@ -281,54 +323,53 @@ export const Header: React.FC = () => {
   return (
     <header
       id="masthead"
-      className={`w-full bg-white z-50 transition-all duration-300 ${isSticky
+      className={`w-full bg-white z-50 transition-all duration-300 ${
+        isSticky
           ? "fixed top-0 left-0 shadow-[0_2px_29px_rgba(34,34,34,0.14)]"
           : "relative border-b border-slate-100"
-        }`}
+      }`}
     >
-      {/* Container ẩn của Google Translate */}
-      <div id="google_translate_element" style={{ display: "none" }} />
 
-      {/* TOPBAR (Thanh thông tin đầu trang - Tone màu Xanh Navy #0F1E36 & Vàng Gold #96794F đồng bộ Luật Hải Minh Quân) */}
-      <div className="bg-[#0F1E36] text-white text-xs font-medium py-2 border-b border-[#96794F]/25 shadow-sm">
+      {/* TOPBAR (Thanh thông tin đầu trang - Tone Vàng Ánh Kim Hoàng Gia Sang Trọng) */}
+      <div className="bg-gradient-to-r from-[#C59B27] via-[#FDE89D] to-[#B8871E] text-[#0B132B] text-xs font-semibold py-2 border-b border-[#A07316]/30 shadow-xs">
         <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Bên trái: Địa chỉ (Hyperlink Google Maps) | Email | Hotline */}
-          <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-slate-200 text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
-            {/* Địa chỉ - Click mở Google Maps chỉ đường */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 lg:gap-4 text-[#0B132B] text-[11px] sm:text-[12px] lg:text-[12.5px] truncate">
+            {/* Địa chỉ - Click mở Google Maps chỉ đường trực tiếp */}
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                 firmInfo.headquarters
               )}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 truncate hover:text-[#DFBA73] transition-colors cursor-pointer group"
+              className="flex items-center gap-1.5 truncate hover:text-black hover:underline transition-all cursor-pointer group"
               title={`Bấm để mở Google Maps chỉ đường:\n${firmInfo.headquarters}`}
             >
-              <MapPin className="w-3.5 h-3.5 text-[#DFBA73] shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="truncate underline-offset-2 hover:underline">
+              <MapPin className="w-3.5 h-3.5 text-[#0B132B] shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate underline-offset-2">
                 {firmInfo.addressShort}
               </span>
             </a>
 
-            <span className="text-white/25 select-none hidden md:inline">|</span>
+            <span className="text-[#0B132B]/30 select-none hidden md:inline">|</span>
 
             {/* Email */}
             <a
               href={`mailto:${firmInfo.email}`}
-              className="hidden md:flex items-center gap-1.5 shrink-0 hover:text-[#DFBA73] transition-colors"
+              className="hidden md:flex items-center gap-1.5 shrink-0 hover:text-black hover:underline transition-colors"
             >
-              <Mail className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
+              <Mail className="w-3.5 h-3.5 text-[#0B132B] shrink-0" />
               <span>{firmInfo.email}</span>
             </a>
 
-            <span className="text-white/25 select-none hidden sm:inline">|</span>
+            <span className="text-[#0B132B]/30 select-none hidden sm:inline">|</span>
 
             {/* Hotline */}
             <a
               href={`tel:${firmInfo.hotlineRaw}`}
-              className="hidden sm:flex items-center gap-1.5 shrink-0 font-bold text-white hover:text-[#DFBA73] transition-colors"
+              className="hidden sm:flex items-center gap-1.5 shrink-0 font-bold text-[#0B132B] hover:text-black transition-colors"
             >
-              <Phone className="w-3.5 h-3.5 text-[#DFBA73] shrink-0" />
+              <Phone className="w-3.5 h-3.5 text-[#0B132B] shrink-0" />
               <span>{firmInfo.phone}</span>
             </a>
           </div>
@@ -339,24 +380,25 @@ export const Header: React.FC = () => {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="text-slate-200 hover:text-[#DFBA73] transition-colors p-1 cursor-pointer"
+              className="text-[#0B132B] hover:text-black hover:scale-110 transition-all p-1 cursor-pointer"
               title="Tìm kiếm thông tin"
             >
               <Search className="w-3.5 h-3.5" />
             </button>
 
-            <span className="text-white/20 select-none">|</span>
+            <span className="text-[#0B132B]/30 select-none">|</span>
 
             {/* 4 Cờ Ngôn Ngữ */}
             <div className="flex items-center gap-1.5">
               {/* Tiếng Anh */}
               <button
                 type="button"
+                data-flag="en"
                 onClick={() => handleSelectLanguage("en")}
                 className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
                   currentLang === "en"
-                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
-                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
                 }`}
                 title="English (Tiếng Anh)"
               >
@@ -366,11 +408,12 @@ export const Header: React.FC = () => {
               {/* Tiếng Nhật */}
               <button
                 type="button"
+                data-flag="ja"
                 onClick={() => handleSelectLanguage("ja")}
                 className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
                   currentLang === "ja"
-                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
-                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
                 }`}
                 title="日本語 (Tiếng Nhật)"
               >
@@ -380,11 +423,12 @@ export const Header: React.FC = () => {
               {/* Tiếng Hàn */}
               <button
                 type="button"
+                data-flag="ko"
                 onClick={() => handleSelectLanguage("ko")}
                 className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
                   currentLang === "ko"
-                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
-                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
                 }`}
                 title="한국어 (Tiếng Hàn)"
               >
@@ -394,11 +438,12 @@ export const Header: React.FC = () => {
               {/* Tiếng Việt */}
               <button
                 type="button"
+                data-flag="vi"
                 onClick={() => handleSelectLanguage("vi")}
                 className={`w-5 sm:w-6 h-3.5 sm:h-4 rounded-[2px] overflow-hidden border transition-all duration-200 cursor-pointer ${
                   currentLang === "vi"
-                    ? "border-[#DFBA73] ring-2 ring-[#DFBA73] scale-110 shadow-sm"
-                    : "border-white/20 opacity-80 hover:opacity-100 hover:scale-105"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-[#0B132B]/30 opacity-80 hover:opacity-100 hover:scale-105 shadow-xs"
                 }`}
                 title="Tiếng Việt"
               >
@@ -817,32 +862,52 @@ export const Header: React.FC = () => {
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                data-flag="en"
                 onClick={() => handleSelectLanguage("en")}
-                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "en" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${
+                  currentLang === "en"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-slate-300 opacity-80 hover:opacity-100"
+                }`}
                 title="English"
               >
                 <FlagUK />
               </button>
               <button
                 type="button"
+                data-flag="ja"
                 onClick={() => handleSelectLanguage("ja")}
-                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "ja" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${
+                  currentLang === "ja"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-slate-300 opacity-80 hover:opacity-100"
+                }`}
                 title="日本語"
               >
                 <FlagJapan />
               </button>
               <button
                 type="button"
+                data-flag="ko"
                 onClick={() => handleSelectLanguage("ko")}
-                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "ko" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${
+                  currentLang === "ko"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-slate-300 opacity-80 hover:opacity-100"
+                }`}
                 title="한국어"
               >
                 <FlagKorea />
               </button>
               <button
                 type="button"
+                data-flag="vi"
                 onClick={() => handleSelectLanguage("vi")}
-                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${currentLang === "vi" ? "ring-2 ring-[#96794F]" : "border-slate-300 opacity-80"}`}
+                className={`w-6 h-4 rounded-[2px] overflow-hidden border cursor-pointer ${
+                  currentLang === "vi"
+                    ? "border-2 border-[#0B132B] ring-2 ring-[#0B132B]/35 scale-110 shadow-md opacity-100"
+                    : "border-slate-300 opacity-80 hover:opacity-100"
+                }`}
                 title="Tiếng Việt"
               >
                 <FlagVietnam />
@@ -964,6 +1029,21 @@ export const Header: React.FC = () => {
           </div>
         </div>
       )}
+      {/* Vị trí khởi tạo ẩn của Google Translate (không dùng display:none để widget mount thành công) */}
+      <div
+        id="google_translate_element"
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: "-9999px",
+          width: "1px",
+          height: "1px",
+          opacity: 0,
+          pointerEvents: "none",
+          overflow: "hidden",
+        }}
+      />
     </header>
   );
 };

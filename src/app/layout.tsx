@@ -106,7 +106,15 @@ export default function RootLayout({
     <html
       lang="vi"
       className={`${playfair.variable} ${jakarta.variable} scroll-smooth antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var l=localStorage.getItem('selected_lang');if(!l){var m=document.cookie.match(/(?:^|;\\s*)googtrans=\\/(?:vi|auto)\\/([a-z]+)/);if(m&&m[1])l=m[1];}if(!l||['en','ja','ko','vi'].indexOf(l)===-1)l='vi';document.documentElement.setAttribute('data-lang',l);}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-screen flex flex-col bg-warm-50 text-navy-900 font-sans selection:bg-gold-500 selection:text-white">
         <VisitTracker />
         <LegalServiceSchema />

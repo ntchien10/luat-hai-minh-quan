@@ -331,17 +331,36 @@ body {
 /* ══════════════════════════════════════════════════════════════
    GOOGLE TRANSLATE CUSTOM INTEGRATION
    ══════════════════════════════════════════════════════════════ */
+iframe.skiptranslate,
+iframe.VIpgJd-ZVi9od-ORHb-OEVmcd,
 .goog-te-banner-frame.skiptranslate,
 .goog-te-banner-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
 #goog-gt-tt,
 .goog-te-balloon-frame {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  pointer-events: none !important;
 }
-body {
+html, body {
   top: 0px !important;
+  position: static !important;
 }
 #google_translate_element {
-  display: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
 }
 .goog-tooltip,
 .goog-tooltip:hover {
@@ -350,4 +369,18 @@ body {
 .goog-text-highlight {
   background-color: transparent !important;
   box-shadow: none !important;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INSTANT ANTI-FLICKER LANGUAGE FLAG ACTIVE HIGHLIGHT
+   ══════════════════════════════════════════════════════════════ */
+html[data-lang="vi"] [data-flag="vi"],
+html[data-lang="en"] [data-flag="en"],
+html[data-lang="ja"] [data-flag="ja"],
+html[data-lang="ko"] [data-flag="ko"] {
+  border-width: 2px !important;
+  border-color: #0B132B !important;
+  box-shadow: 0 0 0 2px rgba(11, 19, 43, 0.35), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+  transform: scale(1.1) !important;
+  opacity: 1 !important;
 }

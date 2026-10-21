@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https: blob:; font-src 'self' data: https:; frame-src 'self' https://www.google.com https://maps.google.com; connect-src 'self' https:;",
+              "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: https: blob: http://translate.google.com https://translate.google.com https://translate.googleapis.com https://www.gstatic.com; font-src 'self' data: https:; frame-src 'self' https://www.google.com https://maps.google.com https://translate.google.com https://translate.googleapis.com; connect-src 'self' https:;",
           },
         ],
       },
