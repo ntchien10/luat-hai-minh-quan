@@ -40,9 +40,11 @@ export function BlogPostLiveDetail({ slug }: Props) {
       if (!isMounted) return;
 
       if (res.articles && res.articles.length > 0) {
-        const found = res.articles.find(
-          (a) => a.slug === slug || slug.includes(a.slug) || a.slug.includes(slug)
-        );
+        const cleanSlug = decodeURIComponent(slug).replace(/\/$/, "").trim().toLowerCase();
+        const found = res.articles.find((a) => {
+          const aSlug = decodeURIComponent(a.slug || "").replace(/\/$/, "").trim().toLowerCase();
+          return aSlug === cleanSlug || a.id === cleanSlug || aSlug.includes(cleanSlug) || cleanSlug.includes(aSlug);
+        });
         if (found) {
           setArticle(found);
           setIsLoading(false);

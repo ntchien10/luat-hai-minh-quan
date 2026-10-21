@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const nextConfig: NextConfig = {
-  output: "export",
+  ...(isProd ? { output: "export" as const } : {}),
   trailingSlash: true,
   images: {
     unoptimized: true, // Bắt buộc khi dùng static export để Next/Image không đòi hỏi server Node.js tối ưu ảnh

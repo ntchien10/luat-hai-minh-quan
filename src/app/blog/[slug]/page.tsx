@@ -39,7 +39,16 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = usefulArticles.find((p) => p.slug === slug);
-  if (!post) return { title: "Bài viết không tìm thấy" };
+  if (!post) {
+    const cleanTitle = slug
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+    return {
+      title: `${cleanTitle} | Luật Hải Minh Quân`,
+      description: "Bài viết cẩm nang pháp luật - Công ty Luật TNHH Hải Minh Quân",
+    };
+  }
 
   return {
     title: post.title,
