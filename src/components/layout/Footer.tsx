@@ -103,10 +103,6 @@ export const Footer: React.FC = () => {
               <p className="leading-relaxed text-[12px] text-slate-400">
                 <strong className="text-white">Giấy phép ĐKHĐ:</strong> Số {firmInfo.licenseNumber} do Sở Tư pháp TP. Hà Nội cấp
               </p>
-
-              <p className="leading-relaxed text-[12px] text-slate-400">
-                <strong className="text-white">Thẻ Luật sư:</strong> {firmInfo.lawyerCard}
-              </p>
             </div>
           </motion.div>
 
